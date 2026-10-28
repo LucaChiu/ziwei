@@ -127,6 +127,7 @@
   .center td { padding: 2px 0; }
   .center .now { margin-top: 8px; padding: 6px 8px; background: #f6f1e7; border-radius: 6px; line-height: 1.6; }
   .legend { margin-top: 8px; font-size: 11.5px; color: var(--muted); line-height: 1.7; }
+  .legend-m { display: none; }
 
   #summary table { border-collapse: collapse; width: 100%; background: #fff; margin-top: 12px; font-size: 13px; }
   #summary caption { text-align: left; font-weight: 600; color: #5b3a1e; padding: 6px 0; }
@@ -274,8 +275,23 @@
     .toggles { gap: 6px 12px; }
 
     .board-wrap { overflow-x: hidden; }
-    .board { min-width: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, auto)); }
-    .cell { padding: 2px 2px 2px; min-height: 10em; }
+    /* 12 宮一次看完：命盤高度固定為一個畫面，四列等高 */
+    .board { min-width: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr));
+             height: min(calc(100svh - 12px), 172vw); }
+    .foot { margin-top: 1px; padding-top: 1px; line-height: 1.2; }
+    .foot .left { line-height: 1.2; }
+    .cell { padding: 2px; min-height: 0; overflow: hidden; }
+    .center { overflow: hidden; }
+    .center .legend, .m-hide { display: none; }
+    .center table th { padding-right: 4px; }
+    .center td, .center th { padding: 0; line-height: 1.35; }
+    .center .now { margin-top: 4px; padding: 3px 5px; line-height: 1.4; }
+    .legend-m { display: block !important; margin: 6px 2px 0; font-size: 11.5px; color: var(--muted); line-height: 1.6; }
+    .legend-m .legend { margin: 0; font-size: inherit; }
+    .layers { flex-direction: row; flex-wrap: wrap; gap: 0 3px; }
+    .mlabel { font-size: 9px; }
+    .stars.flow { margin-top: 1px; }
+    .pbtns { margin-top: 1px; }
     .stars { gap: 2px 1px; }
     .star { min-width: 12px; }
     .star.major { font-size: 12px; }
@@ -371,6 +387,7 @@
   </section>
 
   <div class="board-wrap"><div class="board" id="board" hidden aria-label="命盤"></div></div>
+  <div id="legendM" class="legend-m"></div>
   <section id="ana" hidden aria-live="polite"></section>
   <section id="sfsz" hidden aria-live="polite"></section>
   <section id="summary"></section>
@@ -593,6 +610,11 @@
 
   $('form').addEventListener('submit', (e) => { e.preventDefault(); build(); });
 
+  // 手機預設不顯示雜曜與歲數，讓 12 宮能一次放進一個畫面（勾選框仍可打開）
+  if (window.matchMedia('(max-width: 760px)').matches) {
+    show.adj = false; $('showAdj').checked = false;
+    show.ages = false; $('showAges').checked = false;
+  }
   [['showDec','dec'],['showYr','yr'],['showMo','mo'],['showAdj','adj'],['showCs','cs'],['showAges','ages']].forEach(([id, k]) => {
     $(id).addEventListener('change', () => {
       if ($(id).checked) show[k] = true; else disableLayer(k, id);
@@ -812,12 +834,12 @@
       <h2>本命資料</h2>
       <table>
         <tr><th>姓名</th><td>${esc(state.name || '匿名')}　${'甲丙戊庚壬'.includes(A.chineseDate[0]) ? '陽' : '陰'}${esc(A.gender)}</td></tr>
-        <tr><th>生肖</th><td>${esc(A.zodiac)}　${esc(A.sign)}</td></tr>
-        <tr><th>陽曆</th><td>${esc(A.solarDate)}　${esc(A.time)}（${esc(A.timeRange)}）</td></tr>
-        <tr><th>農曆</th><td>${esc(A.lunarDate)}</td></tr>
+        <tr class="m-hide"><th>生肖</th><td>${esc(A.zodiac)}　${esc(A.sign)}</td></tr>
+        <tr><th>陽曆</th><td>${esc(A.solarDate)} ${esc(A.time)}<span class="m-hide">（${esc(A.timeRange)}）</span></td></tr>
+        <tr class="m-hide"><th>農曆</th><td>${esc(A.lunarDate)}</td></tr>
         <tr><th>四柱</th><td><div class="pillars">${A.chineseDate.split(' ').map((g, k) => `<div><span>${esc(g[0])}</span><span>${esc(g[1])}</span><small>${'年月日時'[k]}</small></div>`).join('')}</div></td></tr>
         <tr><th>五行局</th><td>${esc(A.fiveElementsClass)}</td></tr>
-        <tr><th>命宮／身宮</th><td>${esc(A.earthlyBranchOfSoulPalace)}／${esc(A.earthlyBranchOfBodyPalace)}　命主 ${esc(A.soul)}　身主 ${esc(A.body)}</td></tr>
+        <tr class="m-hide"><th>命宮／身宮</th><td>${esc(A.earthlyBranchOfSoulPalace)}／${esc(A.earthlyBranchOfBodyPalace)}　命主 ${esc(A.soul)}　身主 ${esc(A.body)}</td></tr>
       </table>
       <div class="now">
         ${[
@@ -826,12 +848,17 @@
           show.mo ? `<b style="color:var(--mo)">流月</b> 農曆${MONTHS[state.month - 1]}月 ${esc(H.monthly.heavenlyStem + H.monthly.earthlyBranch)}（以陽曆 ${esc(solar)} 推算）` : ''
         ].filter(Boolean).join('<br>') || '<b style="color:var(--birth)">本命盤</b>（生年四化）。點上方大限／流年／流月按鈕即可疊加運限。'}
       </div>
-      <div class="legend">
+      ${legendHTML()}
+    </div>`;
+  }
+
+  // 圖例：桌機放中宮，手機移到命盤下方（中宮空間不夠）
+  function legendHTML() {
+    return `<div class="legend">
         四化顏色依層級：<span class="mg birth">生年</span><span class="mg dec">大限</span><span class="mg yr">流年</span><span class="mg mo">流月</span>，框內字為祿／權／科／忌。<br>
         外框（只標目前最細一層）：<b style="color:var(--birth)">紅＝本命命宮</b>、<b style="color:var(--dec)">綠＝大限命宮</b>、<b style="color:var(--yr)">藍＝流年命宮</b>、<b style="color:var(--mo)">棕＝流月命宮</b>。宮位左下「限命／年財／月子」為各層宮名。<br>
         <span class="mg self m0">↑祿</span>＝自化（宮干化出本宮星）；選宮後三方四正內：<span class="borrow-tag">借</span>＝空宮借對宮主星、<span class="borrow-tag" style="background:var(--quan)">夾</span>＝天相夾宮四化星、<span style="outline:1.5px dashed var(--lu);padding:0 2px">祿存</span>、<span style="outline:1.5px solid #888;background:#e6e6e6;padding:0 2px">空劫</span>。財帛／田宅宮的「本財運、限財庫…」按鈕可開啟財運分析。
-      </div>
-    </div>`;
+      </div>`;
   }
 
   function summaryHTML(H) {
@@ -883,6 +910,7 @@
     }
     $('board').innerHTML = A.palaces.map((p) => cellHTML(p, H)).join('') + centerHTML(H, solar)
       + '<svg id="sfLines" aria-hidden="true"></svg>';
+    $('legendM').innerHTML = legendHTML();
     $('ana').hidden = !ana;
     $('ana').innerHTML = ana ? anaHTML(ana, other) : '';
     $('sfsz').hidden = false;

@@ -1,353 +1,417 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>紫微斗數排盤</title>
-<meta name="theme-color" content="#8b1e1e">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="紫微排盤">
+<title>紫微斗數排盤｜大限・流年・流月</title>
 <style>
   :root {
-    --line: #8a8a8a;
-    --bg: #fdfcf8;
-    --major: #c0392b;
-    --minor: #1f4e9c;
-    --adj: #555;
-    --lu: #1e9e4a;   /* 祿 */
-    --quan: #8e44ad; /* 權 */
-    --ke: #2471c8;   /* 科 */
-    --ji: #d62c2c;   /* 忌 */
-    --birth: #d9483b; /* 生年四化底色 */
-    --dec: #3d8b2f;   /* 大限 */
-    --year: #2f6fd6;  /* 流年 */
-    --month: #7a4fc9; /* 流月 */
-    --mlabel: #e08a1e; /* 流月宮位標籤 */
-    --boshi: #3a9aa8;
+    --line: #c9b99a;
+    --bg: #fbf8f2;
+    --cell: #fffdf8;
+    --ink: #2b2b2b;
+    --muted: #7a6f5d;
+    --lu: #1a7f37;   /* 祿 */
+    --quan: #8250df; /* 權 */
+    --ke: #0969da;   /* 科 */
+    --ji: #cf222e;   /* 忌 */
+    --birth: #c62828; /* 生年：紅 */
+    --dec: #1f7a4d;  /* 大限：綠 */
+    --yr: #0b5394;   /* 流年：藍 */
+    --mo: #8d5524;   /* 流月：棕 */
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; background: #eceae4; color: #222;
-    font-family: "Noto Serif TC", "PMingLiU", "Microsoft JhengHei", serif;
-  }
-  .wrap { max-width: 1240px; margin: 0 auto; padding: 12px; }
+  [hidden] { display: none !important; }
+  body { margin: 0; font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif; color: var(--ink); background: var(--bg); font-size: 14px; }
+  header { padding: 12px 20px; background: #5b3a1e; color: #fff; }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: 2px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 14px; }
+  fieldset { border: 1px solid var(--line); border-radius: 8px; background: #fff; margin: 0 0 12px; padding: 10px 14px; }
+  legend { font-weight: 600; color: #5b3a1e; padding: 0 6px; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .row label { display: inline-flex; align-items: center; gap: 4px; }
+  input[type=number] { width: 72px; padding: 4px 6px; border: 1px solid #bbb; border-radius: 4px; font-size: 14px; }
+  select { padding: 4px 6px; border: 1px solid #bbb; border-radius: 4px; font-size: 14px; }
+  button { font: inherit; cursor: pointer; }
+  .primary { background: #5b3a1e; color: #fff; border: 0; border-radius: 6px; padding: 6px 18px; font-size: 15px; }
+  .primary:hover, .primary:focus-visible { background: #7a4f2a; }
+  :focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }
+  #err { color: var(--ji); font-weight: 600; margin: 6px 0; min-height: 1em; }
+  #msg { color: var(--lu); margin: -4px 0 6px; min-height: 1em; font-size: 13px; }
+  #err:empty, #msg:empty { min-height: 0; margin: 0; }
+  input[type=text] { width: 110px; padding: 4px 6px; border: 1px solid #bbb; border-radius: 4px; font-size: 14px; }
+  .secondary { background: #fff; color: #5b3a1e; border: 1px solid #5b3a1e; border-radius: 6px; padding: 5px 12px; font-size: 14px; }
+  .secondary:hover, .secondary:focus-visible { background: #f6f1e7; }
+  .profiles { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .profiles .empty { color: var(--muted); font-size: 13px; }
+  .pf { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #fff; }
+  .pf.on { border-color: #5b3a1e; box-shadow: 0 0 0 1px #5b3a1e; }
+  .pf button { border: 0; background: none; padding: 4px 10px; text-align: left; line-height: 1.3; }
+  .pf .load:hover, .pf .load:focus-visible { background: #f6f1e7; }
+  .pf .load b { color: #5b3a1e; }
+  .pf .load small { display: block; color: var(--muted); font-size: 11px; }
+  .pf .del { color: var(--ji); border-left: 1px solid var(--line); padding: 4px 8px; font-size: 16px; }
+  .pf .del:hover, .pf .del:focus-visible { background: #ffebe9; }
 
-  /* ===== 輸入區 ===== */
-  .panel { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
-  .panel h1 { font-size: 18px; margin: 0 0 10px; }
-  .form { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; }
-  .field { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
-  .field input[type=text], .field input[type=number], .field select {
-    padding: 6px 8px; font-size: 15px; border: 1px solid #bbb; border-radius: 4px; font-family: inherit;
-  }
-  .field input[type=number] { width: 80px; }
-  .field input#name { width: 140px; }
-  .radios { display: flex; gap: 10px; padding: 6px 0; }
-  .btn { padding: 7px 14px; font-size: 15px; border: 1px solid #888; border-radius: 4px; background: #f5f5f5; cursor: pointer; font-family: inherit; }
-  .btn.primary { background: #8b1e1e; color: #fff; border-color: #8b1e1e; }
-  .btn:focus-visible, .cell:focus-visible, .palace:focus-visible { outline: 2px solid #2471c8; outline-offset: 1px; }
-  .msg { color: var(--ji); font-size: 14px; min-height: 18px; margin-top: 6px; }
-  .profiles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; font-size: 14px; }
-  .slot { display: flex; border: 1px solid #aaa; border-radius: 4px; overflow: hidden; }
-  .slot button { border: 0; background: #faf6ec; padding: 5px 10px; cursor: pointer; font-family: inherit; font-size: 14px; }
-  .slot button.del { background: #f3e0e0; color: #900; padding: 5px 8px; }
-  .slot.active button:first-child { background: #8b1e1e; color: #fff; }
-  .slot.empty { border-style: dashed; color: #999; padding: 5px 10px; }
+  .nav h2 { font-size: 14px; margin: 8px 0 4px; color: #5b3a1e; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btns button { border: 1px solid var(--line); background: #fff; border-radius: 5px; padding: 4px 8px; font-size: 12.5px; line-height: 1.3; }
+  .btns button small { display: block; color: var(--muted); font-size: 11px; }
+  .btns button[aria-pressed=true] { color: #fff; border-color: transparent; }
+  .btns button:disabled { opacity: .4; cursor: not-allowed; }
+  .nav .hint { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 6px; }
+  .toggles input:disabled + span, .toggles label:has(input:disabled) { opacity: .45; }
+  .btns button[aria-pressed=true] small { color: #f1f1f1; }
+  #decBtns button[aria-pressed=true] { background: var(--dec); }
+  #yrBtns button[aria-pressed=true] { background: var(--yr); }
+  #moBtns button[aria-pressed=true] { background: var(--mo); }
+  .toggles { margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; }
 
-  /* ===== 命盤 ===== */
-  .chart-scroll { overflow-x: auto; }
-  /* ===== 字型切換：命盤內所有字級都用 em，跟著 --fscale 等比縮放 ===== */
-  :root { --chart-font: "Noto Serif TC", "PMingLiU", "MingLiU", serif; --fscale: 1; }
-  :root[data-font="kai"] { --chart-font: "DFKai-SB", "BiauKai", "標楷體", "Kaiti TC", "KaiTi", serif; --fscale: 1.06; }
-  :root[data-font="hei"] { --chart-font: "Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif; --fscale: 0.96; }
-  .fontbar { display: flex; gap: 6px; align-items: center; margin-top: 10px; font-size: 14px; }
-  .fontbar button { padding: 4px 12px; font-size: 14px; border: 1px solid #aaa; border-radius: 4px; background: #faf6ec; cursor: pointer; }
-  .fontbar button[aria-pressed="true"] { background: #8b1e1e; color: #fff; border-color: #8b1e1e; }
+  .board-wrap { overflow-x: auto; }
+  .board { display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr)); grid-template-rows: repeat(4, minmax(190px, auto));
+           border: 2px solid #5b3a1e; background: var(--line); gap: 1px; min-width: 820px; }
+  .cell { background: var(--cell); padding: 5px 6px 4px; display: flex; flex-direction: column; position: relative; }
+  .cell.birth-ming { box-shadow: inset 0 0 0 3px var(--birth); }
+  .cell.dec-ming { box-shadow: inset 0 0 0 3px var(--dec); }
+  .cell.yr-ming { box-shadow: inset 0 0 0 3px var(--yr); }
+  .cell.mo-ming { box-shadow: inset 0 0 0 3px var(--mo); }
+  .cell.dec-ming.yr-ming { box-shadow: inset 0 0 0 3px var(--dec), inset 0 0 0 6px var(--yr); }
+  .cell.yr-ming.mo-ming { box-shadow: inset 0 0 0 3px var(--yr), inset 0 0 0 6px var(--mo); }
+  .cell.dec-ming.mo-ming { box-shadow: inset 0 0 0 3px var(--dec), inset 0 0 0 6px var(--mo); }
+  .cell.dec-ming.yr-ming.mo-ming { box-shadow: inset 0 0 0 3px var(--dec), inset 0 0 0 6px var(--yr), inset 0 0 0 9px var(--mo); }
+
+  /* 星曜直排：星名直書，下方接亮度與四化，再往右接下一顆 */
+  .stars { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 4px 3px; }
+  .star { display: inline-flex; flex-direction: column; align-items: center; min-width: 17px; }
+  .star .nm { writing-mode: vertical-rl; text-orientation: upright; line-height: 1; letter-spacing: 1px; }
+  .star.major { font-size: 15px; font-weight: 700; color: #8b1a1a; }
+  .star.minor { font-size: 13px; color: #333; font-weight: 400; }
+  .star.adjs { font-size: 11px; color: #2563eb; min-width: 13px; } /* 雜曜：藍字 */
+  .borrow { display: inline-flex; flex-wrap: wrap; align-items: flex-start; gap: 4px 3px; border: 2px dashed #c2410c; border-radius: 6px; padding: 2px 4px; background: rgba(255,255,255,.6); }
+  .borrow .borrow-tag { writing-mode: vertical-rl; text-orientation: upright; padding: 2px 0; }
+  .borrow .star.major { color: #8b1a1a; opacity: .9; }
+  .borrow-tag { font-size: 10.5px; color: #fff; background: #c2410c; border-radius: 3px; padding: 0 3px; }
+  .major-b { font-weight: 700; color: #8b1a1a; }
+  #sfsz .borrow { display: inline-block; }
+  #sfsz .borrow-tag { margin-right: 4px; writing-mode: horizontal-tb; padding: 0 3px; }
+  .star.minor.tough { color: #555; }
+  .bri { font-size: 10px; color: var(--muted); font-weight: 400; margin-left: 1px; }
+  .star .bri { margin: 1px 0 0; line-height: 1.1; }
+  /* 四化依層級配色：生年／大限／流年／流月各一色 */
+  .mg { display: inline-block; font-size: 10.5px; font-weight: 700; color: #fff; border-radius: 3px; padding: 0 2px; margin-left: 2px; line-height: 15px; vertical-align: 1px; }
+  .star .mg { margin: 1px 0 0; }
+  .mg.birth { background: var(--birth); }
+  .mg.dec   { background: var(--dec); }
+  .mg.yr    { background: var(--yr); }
+  .mg.mo    { background: var(--mo); }
+  .mg.neutral { background: #57606a; }
+  .adj { margin-top: 3px; font-size: 11px; color: var(--muted); line-height: 1.35; }
+  .stars.flow { margin-top: 4px; gap: 3px 2px; }
+  .star.flw { font-size: 11.5px; min-width: 13px; }
+  .flow .dec { color: var(--dec); } .flow .yr { color: var(--yr); } .flow .mo { color: var(--mo); }
+  .spacer { flex: 1; }
+  .foot { border-top: 1px dashed #ddd2bd; margin-top: 4px; padding-top: 3px; display: flex; justify-content: space-between; align-items: flex-end; gap: 4px; }
+  .foot .left { font-size: 11px; color: var(--muted); line-height: 1.35; }
+  .foot .right { text-align: right; line-height: 1.3; }
+  .pname { font-size: 15px; font-weight: 700; color: #5b3a1e; }
+  .gz { font-size: 13px; font-weight: 600; }
+  .tag { display: inline-block; font-size: 11px; padding: 0 3px; border-radius: 3px; margin-left: 2px; color: #fff; }
+  .tag.body { background: #9a6700; } .tag.laiyin { background: #6e7781; } .tag.xiao { background: #bf3989; }
+  .layers { display: flex; flex-direction: column; gap: 1px; font-size: 12px; font-weight: 700; }
+  .layers .dec { color: var(--dec); } .layers .yr { color: var(--yr); } .layers .mo { color: var(--mo); }
+
+  .center { grid-row: 2 / 4; grid-column: 2 / 4; background: #fff; padding: 12px 16px; font-size: 13px; }
+  .center h2 { margin: 0 0 6px; font-size: 16px; color: #5b3a1e; }
+  .center table { border-collapse: collapse; width: 100%; }
+  .center th { text-align: left; color: var(--muted); font-weight: 400; padding: 2px 8px 2px 0; white-space: nowrap; width: 1%; }
+  .center td { padding: 2px 0; }
+  .center .now { margin-top: 8px; padding: 6px 8px; background: #f6f1e7; border-radius: 6px; line-height: 1.6; }
+  .legend { margin-top: 8px; font-size: 11.5px; color: var(--muted); line-height: 1.7; }
+
+  #summary table { border-collapse: collapse; width: 100%; background: #fff; margin-top: 12px; font-size: 13px; }
+  #summary caption { text-align: left; font-weight: 600; color: #5b3a1e; padding: 6px 0; }
+  #summary th, #summary td { border: 1px solid #d0d7de; padding: 4px 6px; text-align: left; }
+  #summary thead tr { background: #f0f0f0; }
+  footer { font-size: 11.5px; color: var(--muted); text-align: center; padding: 16px; }
+
+  /* 三方四正 */
+  .board { position: relative; }
+  .cell { cursor: pointer; }
+  .cell:hover { background: #fdf6e6; }
+  .cell.sf-self { background: #ffe8b3; }
+  .cell.sf-opp  { background: #fff4d6; }
+  .cell.sf-tri  { background: #fff4d6; }
+  .cell.sf-dim  { opacity: .55; }
+  .tag.sf { background: #9a3412; }
+  #sfLines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+  #sfLines line { stroke: #c2410c; stroke-width: 1.5; stroke-dasharray: 6 4; opacity: .5; }
+  #sfLines circle { fill: #c2410c; }
+  #sfsz { margin-top: 12px; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+  #sfsz h2 { margin: 0 0 6px; font-size: 15px; color: #9a3412; }
+  #sfsz .hint { color: var(--muted); }
+  #sfsz table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 4px 0 8px; }
+  #sfsz th, #sfsz td { border: 1px solid #d0d7de; padding: 4px 6px; text-align: left; vertical-align: top; }
+  #sfsz thead tr { background: #f0f0f0; }
+  #sfsz .role { font-weight: 700; color: #9a3412; white-space: nowrap; }
+  #sfsz .sum { display: grid; grid-template-columns: max-content 1fr; gap: 3px 10px; font-size: 13px; }
+  #sfsz .sum dt { color: var(--muted); }
+  #sfsz .sum dd { margin: 0; }
+  .sha { color: #cf222e; } .ji { color: #1a7f37; }
+  .linkbtn { border: 0; background: none; color: #0969da; padding: 0; text-decoration: underline; }
+
+  /* 字型切換 */
+  :root { --chart-font: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif; }
+  :root[data-font="ming"] { --chart-font: "Noto Serif TC", "PMingLiU", "MingLiU", serif; }
+  :root[data-font="kai"]  { --chart-font: "DFKai-SB", "BiauKai", "標楷體", "Kaiti TC", "KaiTi", serif; }
+  .board { font-family: var(--chart-font); }
+  .fontbar { display: flex; gap: 6px; align-items: center; margin-top: 8px; font-size: 13px; }
+  .fontbar button { padding: 3px 10px; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
+  .fontbar button[aria-pressed="true"] { background: #5b3a1e; color: #fff; border-color: #5b3a1e; }
+  .fontbar button[data-font="hei"]  { font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif; }
   .fontbar button[data-font="ming"] { font-family: "Noto Serif TC", "PMingLiU", serif; }
-  .fontbar button[data-font="kai"] { font-family: "DFKai-SB", "BiauKai", "標楷體", "Kaiti TC", serif; }
-  .fontbar button[data-font="hei"] { font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif; }
+  .fontbar button[data-font="kai"]  { font-family: "DFKai-SB", "BiauKai", "標楷體", "Kaiti TC", serif; }
 
-  .chart {
-    font-family: var(--chart-font); font-size: calc(18px * var(--fscale));
-    position: relative; min-width: 960px;
-    display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, minmax(250px, auto));
-    background: var(--bg); border: 2px solid #555;
-  }
-  .palace {
-    position: relative; border: 1px solid var(--line); padding: 4px 5px;
-    display: flex; flex-direction: column; cursor: pointer; overflow: hidden;
-  }
-  /* 三方四正強調：本宮 + 三合 + 對宮 */
-  .palace.focus { background: #ffe7b3; }
-  .palace.tri { background: #fff4d6; }
-  .palace.focus::after, .palace.tri::after {
-    content: ''; position: absolute; inset: 2px; pointer-events: none; border-radius: 2px;
-  }
-  .palace.focus::after { border: 3px solid #d35400; }
-  .palace.tri::after { border: 2px solid #c9a227; }
-  .palace.focus .pname, .palace.tri .pname { text-decoration: underline; text-underline-offset: 3px; }
-  /* 借對宮主星 */
-  .borrow { display: flex; gap: 0; align-items: flex-start; border: 1.5px dashed var(--major); border-radius: 3px; padding: 1px 2px; margin-right: 2px; background: rgba(255,255,255,.55); }
-  .borrow .borrow-lbl { writing-mode: vertical-rl; text-orientation: upright; font-size: .66em; color: #8b1e1e; letter-spacing: -1px; line-height: 1.05; margin-right: 1px; }
-  .borrow .star.major .sn { opacity: .8; }
-  /* 天相夾宮：鄰宮四化主星 */
+  /* 自化：外框字 ↑祿 */
+  .mg.self { background: transparent; border: 1px solid currentColor; font-size: 9.5px; line-height: 13px; padding: 0 1px; }
+  .mg.self.m0 { color: var(--lu); } .mg.self.m1 { color: var(--quan); } .mg.self.m2 { color: var(--ke); } .mg.self.m3 { color: var(--ji); }
+  /* 天相夾宮 */
   .borrow.jia { border-color: var(--quan); }
-  .borrow.jia .borrow-lbl { color: var(--quan); }
-  /* 標籤顏色跟著宮名所屬的運限層 */
-  .borrow .borrow-lbl.dec { color: var(--dec); }
-  .borrow .borrow-lbl.year { color: var(--year); }
-  .borrow .borrow-lbl.month { color: var(--month); }
-  /* 祿存：只有落在所選三方四正（本宮、三合、對宮）時才加虛線框 */
-  .palace.focus .star.lucun, .palace.tri .star.lucun { border: 1.5px dashed var(--lu); border-radius: 3px; padding: 1px 0; }
-  /* 地空、地劫：落在三方四正時框起來，淺灰底 */
-  .palace.focus .star.kongjie, .palace.tri .star.kongjie { border: 1.5px solid #888; border-radius: 3px; padding: 1px 0; background: #e6e6e6; }
-  .stars { display: flex; flex-wrap: wrap; gap: 2px 0; align-items: flex-start; }
-  /* 字級層次：主星 > 輔星 > 雜曜；四化標籤略小於輔星 */
-  .star { display: flex; flex-direction: column; align-items: center; min-width: 1.15em; }
-  /* 直排星名：負字距讓上下兩字靠近，line-height 1 讓左右星曜靠近 */
-  .star .sn { writing-mode: vertical-rl; text-orientation: upright; line-height: 1; letter-spacing: -.12em; }
-  .star.major .sn { color: var(--major); font-size: 1.125em; font-weight: bold; }
-  .star.minor .sn { color: var(--minor); font-size: .97em; }
-  .star.adj .sn { color: var(--minor); font-size: .8em; opacity: .85; }
-  .star .br { font-size: .7em; color: #666; height: 1.5em; line-height: 1.5em; }
-  /* 四化標籤：字為祿權科忌，底色代表層級（生年/大限/流年/流月） */
-  .tag { font-size: .8em; line-height: 1.4; width: 1.45em; text-align: center; border-radius: 3px; color: #fff; margin-top: 2px; }
-  .tag.birth { background: var(--birth); } .tag.dec { background: var(--dec); }
-  .tag.year { background: var(--year); }   .tag.month { background: var(--month); }
-  .tag.self { background: transparent; border: 1px solid; font-size: .66em; line-height: 1.35; width: auto; padding: 0 1px; }
-  .tag.self.m0 { color: var(--lu); } .tag.self.m1 { color: var(--quan); }
-  .tag.self.m2 { color: var(--ke); } .tag.self.m3 { color: var(--ji); }
-  /* 運限流曜：直排，右側對齊 */
-  .pmidrow { display: flex; align-items: flex-end; gap: 4px; margin-top: auto; padding-top: 3px; }
-  .ages { flex: 1; font-size: .64em; color: #888; line-height: 1.4; }
-  .hstars { display: flex; gap: 1px; }
-  .hstars span { writing-mode: vertical-rl; text-orientation: upright; font-size: .8em; line-height: 1; letter-spacing: -.12em; }
-  .hstars .dec { color: var(--dec); } .hstars .year { color: var(--year); } .hstars .month { color: var(--month); }
-  .pbottom { display: flex; align-items: flex-end; gap: 4px; margin-top: 4px; }
-  .gods { font-size: .76em; line-height: 1.4; color: #333; white-space: nowrap; }
-  .gods .bs { color: var(--boshi); }
-  .gods .ml { color: var(--mlabel); margin-left: 4px; }
-  .pmid { flex: 1; text-align: right; line-height: 1.25; }
-  .range { font-size: .7em; color: #777; }
-  .hlabels div { font-size: .875em; }
-  .hlabels .dec { color: var(--dec); } .hlabels .year { color: var(--year); } .hlabels .month { color: var(--month); }
-  .pname { color: var(--ji); font-size: .97em; font-weight: bold; }
-  .body-tag { font-size: .66em; color: #fff; background: var(--major); border-radius: 2px; padding: 0 3px; margin-left: 2px; vertical-align: middle; font-weight: normal; }
-  .pright { text-align: center; }
-  .cs { font-size: .75em; color: #444; }
-  .gz { font-size: 1.125em; line-height: 1.15; }
+  .borrow.jia .borrow-tag { background: var(--quan); }
+  /* 三方四正內：祿存虛線框、地空地劫灰框 */
+  .cell.sf-on .star.lucun { outline: 1.5px dashed var(--lu); outline-offset: 1px; border-radius: 3px; }
+  .cell.sf-on .star.kongjie { outline: 1.5px solid #888; background: #e6e6e6; border-radius: 3px; }
+  /* 宮位底部：歲數、十二神、流月標籤 */
+  .ages { font-size: 10.5px; color: var(--muted); line-height: 1.35; }
+  .gods { font-size: 11px; color: #444; line-height: 1.35; }
+  .gods .bs { color: #3a9aa8; }
+  .mlabel { font-size: 11.5px; font-weight: 700; color: var(--mo); }
+  /* 運限按鈕：當前時間 */
+  .btns button.now { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+  /* 中宮四柱 */
+  .pillars { display: flex; gap: 14px; font-size: 20px; margin: 2px 0 4px; }
+  .pillars div { display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+  .pillars small { font-size: 10px; color: var(--muted); }
 
-  .palace.cur-dec { box-shadow: inset 0 0 0 2px var(--dec); }
-  .palace.cur-year .gz { color: var(--year); font-weight: bold; }
-
-  .center {
-    grid-row: 2 / 4; grid-column: 2 / 4; border: 1px solid var(--line);
-    padding: 16px 22px; font-size: .94em; line-height: 1.75; background: #fff;
-    display: flex; flex-direction: column; justify-content: center;
-  }
-  .center h2 { margin: 0 0 6px; text-align: center; font-size: 1.45em; letter-spacing: .2em; }
-  .center .row { display: flex; gap: 18px; flex-wrap: wrap; }
-  .center .k { color: #777; }
-  .pillars { display: flex; gap: 14px; font-size: 1.45em; margin: 4px 0; }
-  .pillars div { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
-  .pillars small { font-size: .5em; color: #888; }
-  .legend { font-size: .85em; margin-top: 8px; color: #555; line-height: 1.7; }
-  .legend b { font-weight: normal; padding: 0 3px; color: #fff; border-radius: 2px; }
-  .sel-info { margin-top: 6px; font-size: .93em; }
-  .sel-info .dec { color: var(--dec); } .sel-info .year { color: var(--year); } .sel-info .month { color: var(--month); }
-  svg.lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-
-  /* ===== 運限選擇 ===== */
-  .yun { min-width: 960px; margin-top: 8px; background: #fff; border: 2px solid #555; }
-  .yun-row { display: flex; border-top: 1px solid #bbb; }
-  .yun-row:first-child { border-top: 0; }
-  .yun-head { width: 64px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: bold; background: #ece7da; border-right: 1px solid #bbb; }
-  .yun-cells { flex: 1; display: grid; grid-template-columns: repeat(12, 1fr); }
-  .cell { border: 0; border-left: 1px solid #ddd; background: #fff; padding: 6px 2px; font-size: 13px; line-height: 1.35; cursor: pointer; font-family: inherit; color: #333; }
-  .cell:first-child { border-left: 0; }
-  .cell:hover { background: #f6f1e3; }
-  .cell.sel { background: #8b1e1e; color: #fff; }
-  .cell.now { font-weight: bold; text-decoration: underline; }
-  .hint { font-size: 12px; color: #777; margin-top: 6px; }
-
-  /* ===== 財運 / 財庫分析 ===== */
-  /* 宮位內的財運 / 財庫按鈕，邊框顏色代表層級 */
-  .pbtns { display: flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; margin-top: 4px; position: relative; z-index: 1; }
-  .pbtn { font-family: inherit; font-size: 13px; line-height: 1.2; padding: 2px 6px; border-radius: 10px; cursor: pointer;
-    background: #fff; border: 1.5px solid var(--birth); color: var(--birth); }
+  /* 財運／財庫分析 */
+  .pbtns { display: flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; margin-top: 4px; }
+  .pbtn { font-size: 12px; line-height: 1.2; padding: 2px 7px; border-radius: 10px; background: #fff; border: 1.5px solid var(--birth); color: var(--birth); }
   .pbtn.dec { border-color: var(--dec); color: var(--dec); }
-  .pbtn.year { border-color: var(--year); color: var(--year); }
+  .pbtn.yr  { border-color: var(--yr); color: var(--yr); }
   .pbtn:hover { background: #fff3d6; }
   .pbtn[aria-pressed="true"] { color: #fff; background: var(--birth); }
   .pbtn.dec[aria-pressed="true"] { background: var(--dec); }
-  .pbtn.year[aria-pressed="true"] { background: var(--year); }
-  .pbtn:focus-visible { outline: 2px solid #2471c8; outline-offset: 1px; }
-  .ana { margin-top: 12px; background: #fff; border: 2px solid #555; border-radius: 6px; padding: 14px 16px; min-width: 960px; }
+  .pbtn.yr[aria-pressed="true"]  { background: var(--yr); }
+  #ana { margin-top: 12px; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
   .ana-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
-  .ana-head h3 { margin: 0; font-size: 19px; }
-  .ana-score span { font-size: 30px; font-weight: bold; }
-  .ana-score small { font-size: 16px; color: #666; }
-  .ana-warn.care { background: #fff4e5; border-color: #c0601a; color: #8a4510; }
-  .ana-rating { font-size: 15px; padding: 2px 10px; border-radius: 12px; color: #fff; }
+  .ana-head h3 { margin: 0; font-size: 17px; color: #5b3a1e; }
+  .ana-score span { font-size: 28px; font-weight: bold; }
+  .ana-score small { font-size: 14px; color: #666; }
+  .ana-rating { font-size: 14px; padding: 2px 10px; border-radius: 12px; color: #fff; }
   .r-best { color: #1e7d3a; } .r-good { color: #2e8b57; } .r-mid { color: #b9770e; } .r-weak { color: #c0601a; } .r-bad { color: #c0392b; }
-  .ana-rating.r-best, .meter .r-best { background: #1e7d3a; color: #fff; }
-  .ana-rating.r-good, .meter .r-good { background: #2e8b57; color: #fff; }
-  .ana-rating.r-mid, .meter .r-mid { background: #b9770e; color: #fff; }
-  .ana-rating.r-weak, .meter .r-weak { background: #c0601a; color: #fff; }
-  .ana-rating.r-bad, .meter .r-bad { background: #c0392b; color: #fff; }
-  .meter { height: 10px; background: #eee; border-radius: 5px; overflow: hidden; margin: 8px 0 10px; }
-  .meter div { height: 100%; }
-  .ana-warn { background: #fdecea; border: 1px solid #c0392b; color: #a02a1f; padding: 6px 10px; border-radius: 4px; margin-bottom: 8px; font-weight: bold; }
-  .ana-body { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
-  .ana-text p { margin: 0 0 8px; line-height: 1.75; font-size: 15px; }
-  .ana-table { width: 100%; border-collapse: collapse; font-size: 13.5px; align-self: start; }
-  .ana-table th, .ana-table td { border-bottom: 1px solid #e3e3e3; padding: 5px 6px; text-align: left; vertical-align: top; }
+  .ana-rating.r-best { background: #1e7d3a; color: #fff; } .ana-rating.r-good { background: #2e8b57; color: #fff; }
+  .ana-rating.r-mid { background: #b9770e; color: #fff; } .ana-rating.r-weak { background: #c0601a; color: #fff; }
+  .ana-rating.r-bad { background: #c0392b; color: #fff; }
+  .ana-warn { background: #fdecea; border: 1px solid #c0392b; color: #a02a1f; padding: 6px 10px; border-radius: 4px; margin: 8px 0; font-weight: bold; }
+  .ana-warn.care { background: #fff4e5; border-color: #c0601a; color: #8a4510; }
+  #ana { font-size: 14.5px; line-height: 1.8; color: #2b2b2b; }
+  #ana h5 { margin: 0 0 4px; font-size: 14px; }
+  .ana-summary { margin: 10px 0 4px; padding: 10px 14px; border-radius: 6px; background: #faf6ec; border-left: 4px solid currentColor; }
+  .ana-summary b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .ana-summary { color: inherit; }
+  .ana-summary.r-best, .ana-summary.r-good { border-left-color: #2e8b57; }
+  .ana-summary.r-mid { border-left-color: #b9770e; }
+  .ana-summary.r-weak, .ana-summary.r-bad { border-left-color: #c0392b; }
+  .ana-body { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; margin-top: 12px; align-items: start; }
+  /* 分段：位置／主星／有利／不利，每段一張小卡、每點一行 */
+  .ana-sec { border: 1px solid #ece4d2; border-radius: 6px; padding: 8px 12px 6px; margin-bottom: 10px; background: #fffdf8; }
+  .ana-sec h5 { color: #5b3a1e; }
+  .ana-sec.good h5 { color: #1e7d3a; } .ana-sec.good { border-left: 4px solid #2e8b57; }
+  .ana-sec.bad h5 { color: #c0392b; }  .ana-sec.bad { border-left: 4px solid #c0392b; }
+  .ana-sec.info { border-left: 4px solid #c9b99a; }
+  .ana-sec ul, .ana-combo ul, .ana-note ul { margin: 0; padding-left: 1.1em; }
+  .ana-sec li { margin-bottom: 4px; }
+  .ana-sec li b { color: #333; }
+  .sep { color: #bbb; margin: 0 4px; }
+  .role-tag { display: inline-block; font-size: 11.5px; line-height: 1.5; padding: 0 6px; margin-right: 6px; border-radius: 9px; background: #efe8d8; color: #6b5a3a; vertical-align: 1px; }
+  .ana-th { color: #5b3a1e; }
+  .ana-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ana-table th, .ana-table td { border-bottom: 1px solid #e3e3e3; padding: 6px 8px; text-align: left; vertical-align: top; line-height: 1.5; }
   .ana-table th { background: #f3efe4; }
-  .ana-table td:last-child, .ana-table th:last-child { text-align: right; white-space: nowrap; }
+  .ana-table td small { display: block; color: #888; font-size: 11.5px; margin-top: 1px; }
+  .ana-table td:last-child, .ana-table th:last-child { text-align: right; white-space: nowrap; font-weight: 600; }
   .ana-table .pos { color: #1e7d3a; } .ana-table .neg { color: #c0392b; }
   .ana-table tr.sub td { font-weight: bold; border-top: 1px solid #999; }
-  .ana-note { font-size: 12px; color: #777; margin: 10px 0 0; line-height: 1.6; }
-  .ana-combo { margin-top: 12px; padding: 10px 14px; background: #f7f3e8; border-left: 4px solid #b9770e; border-radius: 4px; }
-  .ana-combo h4 { margin: 0 0 6px; font-size: 16px; }
-  .ana-combo p { margin: 0 0 6px; line-height: 1.75; font-size: 15px; }
-  .ana-domains { margin-top: 12px; }
-  .ana-domains h4 { margin: 0 0 8px; font-size: 16px; }
-  .ana-domains { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
-  .ana-domains h4 { grid-column: 1 / -1; }
-  .ana-domains h4 small { font-weight: normal; color: #888; font-size: 12px; margin-left: 6px; }
-  .dom { border: 1px solid #e0d8c4; border-radius: 4px; padding: 8px 12px; background: #fffdf7; }
-  .dom-h { font-weight: bold; font-size: 15px; margin-bottom: 4px; }
+  .ana-note { font-size: 12.5px; color: #777; margin: 14px 0 0; line-height: 1.7; }
+  .ana-note summary { cursor: pointer; color: #5b3a1e; }
+  .ana-combo { margin-top: 16px; padding: 12px 16px; background: #f7f3e8; border-left: 4px solid #b9770e; border-radius: 6px; }
+  .ana-combo h4 { margin: 0 0 8px; font-size: 15px; }
+  .ana-combo h5 { margin-top: 8px !important; color: #8a5a10; }
+  .ana-combo p { margin: 6px 0; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { font-size: 13px; padding: 2px 10px; border-radius: 12px; background: #fff; border: 1.5px solid currentColor; font-weight: 600; }
+  .ana-domains { margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  .ana-domains h4 { grid-column: 1 / -1; margin: 0; font-size: 15px; }
+  .ana-domains h4 small { display: block; font-weight: normal; color: #888; font-size: 12px; }
+  .dom { border: 1px solid #e0d8c4; border-radius: 6px; padding: 10px 14px; background: #fffdf7; }
+  .dom-h { font-weight: bold; font-size: 15px; margin-bottom: 6px; color: #5b3a1e; border-bottom: 1px dashed #e0d8c4; padding-bottom: 4px; }
   .dom-h small { font-weight: normal; color: #888; margin-left: 6px; font-size: 12px; }
-  .dom ul { margin: 0; padding-left: 18px; }
-  .dom li { line-height: 1.65; font-size: 14px; margin-bottom: 2px; }
+  .dom ul { margin: 0; padding: 0; list-style: none; }
+  .dom li { font-size: 14px; line-height: 1.75; padding: 6px 0; border-bottom: 1px solid #f2ecdf; }
+  .dom li:last-child { border-bottom: 0; }
+  .dom li .k { display: block; color: #333; }
+  .dom li .v { display: block; color: #444; }
 
-  /* ===== 手機版（寬度 ≤ 760px）：命盤維持 4×4，整體縮小；選單與分析改成窄版 ===== */
+  /* 手機版：命盤縮成一屏、分析區單欄 */
   @media (max-width: 760px) {
-    .wrap { padding: 6px; }
-    .panel { padding: 10px; }
-    .panel h1 { font-size: 17px; }
-    .form { gap: 8px 10px; }
-    .field input[type=number] { width: 64px; }
-    .field input#name { width: 120px; }
-    .field input, .field select { font-size: 16px; } /* 16px 以上 iPhone 才不會自動放大畫面 */
-    .btn { padding: 8px 12px; }
+    main { padding: 6px; }
+    header { padding: 10px 12px; }
+    header h1 { font-size: 16px; letter-spacing: 1px; }
+    fieldset { padding: 8px 10px; }
+    .row { gap: 8px 10px; }
+    input, select { font-size: 16px; } /* iPhone 16px 以上才不會自動放大 */
+    input[type=number] { width: 64px; }
+    .btns button { font-size: 11.5px; padding: 3px 6px; }
+    .toggles { gap: 6px 12px; }
 
-    /* 命盤：取消最小寬度，字級跟著螢幕寬度縮放 */
-    .chart { min-width: 0; font-size: calc(clamp(8.5px, 2.65vw, 12px) * var(--fscale));
-      grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, auto)); border-width: 1px; }
-    .palace { padding: 2px; min-height: 9.5em; min-width: 0; }
-    .center { min-width: 0; overflow: hidden; }
-    .pbottom { flex-wrap: wrap; justify-content: flex-end; }
-    .gods { white-space: normal; }
-    .palace.focus::after { border-width: 2px; inset: 1px; }
-    .palace.tri::after { border-width: 1.5px; inset: 1px; }
-    .ages { display: none; }            /* 流年 / 小限歲數：手機上省略 */
-    .gods { font-size: .7em; line-height: 1.25; }
-    .gods .ml { display: block; margin-left: 0; }
-    .pbottom { gap: 2px; }
-    .pbtns { gap: 2px; }
+    .board-wrap { overflow-x: hidden; }
+    .board { min-width: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, auto)); }
+    .cell { padding: 2px 2px 2px; min-height: 10em; }
+    .stars { gap: 2px 1px; }
+    .star { min-width: 12px; }
+    .star.major { font-size: 12px; }
+    .star.minor { font-size: 10.5px; }
+    .star.adjs, .star.flw { font-size: 9px; min-width: 10px; }
+    .star .nm { letter-spacing: 0; }
+    .mg { font-size: 8.5px; line-height: 12px; padding: 0 1px; }
+    .bri { font-size: 8px; }
+    .borrow { padding: 1px; gap: 1px; border-width: 1.5px; }
+    .borrow-tag { font-size: 8.5px; }
+    .ages { display: none; }
+    .foot { flex-wrap: wrap; gap: 0 2px; }
+    .foot .left, .gods { font-size: 9px; }
+    .layers { font-size: 9.5px; }
+    .pname { font-size: 11px; } .gz { font-size: 10px; }
+    .tag { font-size: 8.5px; padding: 0 2px; }
     .pbtn { font-size: 10px; padding: 1px 4px; border-width: 1px; }
-    .borrow { padding: 0 1px; border-width: 1px; }
-    .tag { border-radius: 2px; }
+    .center { padding: 6px; font-size: 10.5px; }
+    .center h2 { font-size: 12px; }
+    .pillars { font-size: 14px; gap: 6px; }
+    .legend { font-size: 9.5px; line-height: 1.5; }
 
-    /* 中宮：精簡 */
-    .center { padding: 6px 8px; font-size: .95em; line-height: 1.5; }
-    .center h2 { font-size: 1.3em; margin-bottom: 2px; }
-    .center .row { gap: 2px 8px; }
-    .pillars { gap: 8px; font-size: 1.3em; margin: 2px 0; }
-    .legend { font-size: .8em; line-height: 1.5; margin-top: 4px; }
+    #ana { padding: 10px; font-size: 15px; }
+    .ana-head h3 { font-size: 15px; width: 100%; }
+    .ana-body, .ana-domains { grid-template-columns: 1fr; gap: 10px; }
+    .dom li { font-size: 14.5px; }
+    #sfsz { overflow-x: auto; }
+  }
 
-    /* 大限 / 流年 / 流月：改成兩排 */
-    .yun { min-width: 0; }
-    .yun-head { width: 34px; font-size: 13px; writing-mode: vertical-rl; letter-spacing: 2px; }
-    .yun-cells { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; min-width: 0; }
-    .chart-scroll { overflow-x: hidden; }
-    .form > .field, .profiles, .fontbar { max-width: 100%; }
-    .profiles .slot button { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .yun-cells > div.cell { grid-column: 1 / -1 !important; }
-    .cell { font-size: 11.5px; padding: 6px 1px; border-top: 1px solid #eee; }
-    .hint { font-size: 11px; }
-
-    /* 分析區：單欄 */
-    .ana { min-width: 0; padding: 10px; }
-    .ana-head { gap: 8px; }
-    .ana-head h3 { font-size: 16px; width: 100%; }
-    .ana-score span { font-size: 26px; }
-    .ana-body { grid-template-columns: 1fr; gap: 10px; }
-    .ana-text p, .ana-combo p { font-size: 14px; line-height: 1.7; }
-    .ana-table { font-size: 12.5px; }
-    .ana-domains { grid-template-columns: 1fr; }
+  @media print {
+    form, .nav, .toggles, header { display: none; }
+    body { background: #fff; }
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <section class="panel" aria-label="輸入資料">
-    <h1>紫微斗數排盤</h1>
-    <form class="form" id="form" autocomplete="off">
-      <div class="field"><label for="name">姓名</label><input type="text" id="name" maxlength="20" placeholder="可留空"></div>
-      <div class="field"><span>性別</span>
-        <div class="radios" role="radiogroup" aria-label="性別">
-          <label><input type="radio" name="gender" value="男"> 男</label>
-          <label><input type="radio" name="gender" value="女"> 女</label>
-        </div>
+<header><h1>紫微斗數排盤　大限・流年・流月</h1></header>
+<main>
+  <form id="form" novalidate>
+    <fieldset>
+      <legend>出生資料</legend>
+      <div class="row">
+        <span role="radiogroup" aria-label="曆法">
+          <label><input type="radio" name="cal" value="lunar" checked> 農曆</label>
+          <label><input type="radio" name="cal" value="solar"> 陽曆</label>
+        </span>
+        <label>姓名 <input type="text" id="nm" maxlength="20" placeholder="儲存時使用" autocomplete="off"></label>
+        <label>年 <input type="number" id="y" min="1900" max="2100" placeholder="西元" required></label>
+        <label>月 <input type="number" id="m" min="1" max="12" required></label>
+        <label>日 <input type="number" id="d" min="1" max="31" required></label>
+        <label id="leapWrap"><input type="checkbox" id="leap"> 閏月</label>
+        <label>時辰
+          <select id="t" aria-label="出生時辰"></select>
+        </label>
+        <span role="radiogroup" aria-label="性別">
+          <label><input type="radio" name="g" value="男" checked> 男</label>
+          <label><input type="radio" name="g" value="女"> 女</label>
+        </span>
+        <button type="submit" class="primary">排盤</button>
+        <button type="button" class="secondary" id="saveBtn">儲存此人</button>
+        <button type="button" class="secondary" id="clearBtn">清空</button>
       </div>
-      <div class="field"><span>曆法</span>
-        <div class="radios" role="radiogroup" aria-label="曆法">
-          <label><input type="radio" name="cal" value="solar" checked> 國曆</label>
-          <label><input type="radio" name="cal" value="lunar"> 農曆</label>
-        </div>
+      <div class="fontbar" id="fontbar" role="group" aria-label="命盤字型">
+        <span>命盤字型：</span>
+        <button type="button" data-font="hei" aria-pressed="true">黑體</button>
+        <button type="button" data-font="ming" aria-pressed="false">明體</button>
+        <button type="button" data-font="kai" aria-pressed="false">楷體</button>
       </div>
-      <div class="field"><label for="y">年</label><input type="number" id="y" min="1900" max="2100"></div>
-      <div class="field"><label for="m">月</label><input type="number" id="m" min="1" max="12"></div>
-      <div class="field"><label for="d">日</label><input type="number" id="d" min="1" max="31"></div>
-      <div class="field" id="leapWrap" hidden><span>&nbsp;</span><label class="radios"><input type="checkbox" id="leap"> 閏月</label></div>
-      <div class="field"><label for="t">時辰</label>
-        <select id="t">
-          <option value="">請選擇</option>
-          <option value="0">早子時 00:00~01:00</option>
-          <option value="1">丑時 01:00~03:00</option>
-          <option value="2">寅時 03:00~05:00</option>
-          <option value="3">卯時 05:00~07:00</option>
-          <option value="4">辰時 07:00~09:00</option>
-          <option value="5">巳時 09:00~11:00</option>
-          <option value="6">午時 11:00~13:00</option>
-          <option value="7">未時 13:00~15:00</option>
-          <option value="8">申時 15:00~17:00</option>
-          <option value="9">酉時 17:00~19:00</option>
-          <option value="10">戌時 19:00~21:00</option>
-          <option value="11">亥時 21:00~23:00</option>
-          <option value="12">晚子時 23:00~00:00</option>
-        </select>
+    </fieldset>
+    <fieldset>
+      <legend>已儲存（最多 5 位）</legend>
+      <div class="profiles" id="profiles"></div>
+    </fieldset>
+  </form>
+  <div id="err" role="alert" aria-live="assertive"></div>
+  <div id="msg" role="status" aria-live="polite"></div>
+
+  <section class="nav" id="nav" hidden aria-label="運限選擇">
+    <fieldset>
+      <legend>運限選擇</legend>
+      <h2>大限</h2><div class="btns" id="decBtns"></div>
+      <h2>流年<span class="hint" id="yrHint">（請先選擇大限）</span></h2><div class="btns" id="yrBtns"></div>
+      <h2>流月（農曆）<span class="hint" id="moHint">（請先選擇流年）</span></h2><div class="btns" id="moBtns"></div>
+      <div class="toggles">
+        <label><input type="checkbox" id="showDec"> 顯示大限</label>
+        <label><input type="checkbox" id="showYr"> 顯示流年</label>
+        <label><input type="checkbox" id="showMo"> 顯示流月</label>
+        <label><input type="checkbox" id="showAdj" checked> 顯示雜曜</label>
+        <label><input type="checkbox" id="showAges" checked> 顯示流年／小限歲數</label>
+        <label><input type="checkbox" id="showCs"> 顯示十二神（長生／博士／將前／歲前）</label>
       </div>
-      <button type="submit" class="btn primary">排盤</button>
-      <button type="button" class="btn" id="saveBtn">儲存設定</button>
-      <button type="button" class="btn" id="clearBtn">清空</button>
-    </form>
-    <div class="msg" id="msg" role="alert"></div>
-    <div class="profiles" id="profiles" aria-label="已儲存設定"></div>
-    <div class="fontbar" id="fontbar" role="group" aria-label="命盤字型">
-      <span>字型：</span>
-      <button type="button" data-font="ming" aria-pressed="true">明體</button>
-      <button type="button" data-font="kai" aria-pressed="false">楷體</button>
-      <button type="button" data-font="hei" aria-pressed="false">黑體</button>
-    </div>
+    </fieldset>
   </section>
 
-  <div id="out"></div>
-</div>
+  <div class="board-wrap"><div class="board" id="board" hidden aria-label="命盤"></div></div>
+  <section id="ana" hidden aria-live="polite"></section>
+  <section id="sfsz" hidden aria-live="polite"></section>
+  <section id="summary"></section>
+</main>
+<footer>排盤引擎：<a href="https://github.com/SylarLong/iztro" target="_blank" rel="noopener">iztro</a>（本機離線載入）｜年齡皆為虛歲，流年以農曆正月初一換年。</footer>
 
 <script src="iztro.min.js"></script>
 <script>
 (() => {
   'use strict';
-  const MAX_PROFILES = 5;
-  const STORE_KEY = 'ziwei_profiles_v1';
-  const MUT = ['祿', '權', '科', '忌'];
+  const LANG = 'zh-TW';
+  const BR = ['寅','卯','辰','巳','午','未','申','酉','戌','亥','子','丑']; // iztro palace index 0..11
+  const POS = { 巳:[1,1], 午:[1,2], 未:[1,3], 申:[1,4], 辰:[2,1], 酉:[2,4], 卯:[3,1], 戌:[3,4], 寅:[4,1], 丑:[4,2], 子:[4,3], 亥:[4,4] };
+  const SHORT = { 命宮:'命', 兄弟:'兄', 夫妻:'夫', 子女:'子', 財帛:'財', 疾厄:'疾', 遷移:'遷', 僕役:'友', 官祿:'官', 田宅:'田', 福德:'福', 父母:'父' };
+  const MG = ['祿','權','科','忌'];
   const STEMS = '甲乙丙丁戊己庚辛壬癸';
   const BRANCHES = '子丑寅卯辰巳午未申酉戌亥';
-  const MONTHS = ['正月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
-  // 十干四化（祿權科忌），與 iztro 預設一致，用於自化
+  const MONTHS = ['正','二','三','四','五','六','七','八','九','十','十一','十二'];
+  const TIMES = [
+    ['早子時','00:00~01:00'], ['丑時','01:00~03:00'], ['寅時','03:00~05:00'], ['卯時','05:00~07:00'],
+    ['辰時','07:00~09:00'], ['巳時','09:00~11:00'], ['午時','11:00~13:00'], ['未時','13:00~15:00'],
+    ['申時','15:00~17:00'], ['酉時','17:00~19:00'], ['戌時','19:00~21:00'], ['亥時','21:00~23:00'],
+    ['晚子時','23:00~00:00']
+  ];
+  const LAYERS = [
+    { key: 'decadal', cls: 'dec', sup: '限', label: '大限', prefix: '限' },
+    { key: 'yearly',  cls: 'yr',  sup: '年', label: '流年', prefix: '年' },
+    { key: 'monthly', cls: 'mo',  sup: '月', label: '流月', prefix: '月' }
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  const yearGZ = (y) => STEMS[((y - 4) % 10 + 10) % 10] + BRANCHES[((y - 4) % 12 + 12) % 12];
+  const branchOfYear = (y) => BRANCHES[((y - 4) % 12 + 12) % 12];
+  // 五虎遁：由年干推月干（農曆 m 月）
+  const monthGZ = (y, m) => {
+    const ys = ((y - 4) % 10 + 10) % 10;
+    const start = ((ys % 5) * 2 + 2) % 10;
+    return STEMS[(start + m - 1) % 10] + BRANCHES[(m + 1) % 12];
+  };
+  // 十干四化（祿權科忌），與 iztro 預設一致；用於自化與計分
   const SIHUA = {
     甲: ['廉貞','破軍','武曲','太陽'], 乙: ['天機','天梁','紫微','太陰'],
     丙: ['天同','天機','文昌','廉貞'], 丁: ['太陰','天同','天機','巨門'],
@@ -355,391 +419,546 @@
     庚: ['太陽','武曲','太陰','天同'], 辛: ['巨門','太陽','文曲','文昌'],
     壬: ['天梁','紫微','左輔','武曲'], 癸: ['破軍','巨門','太陰','貪狼'],
   };
-  const SHORT = { 命宮:'命', 兄弟:'兄', 夫妻:'夫', 子女:'子', 財帛:'財', 疾厄:'疾', 遷移:'遷', 僕役:'友', 交友:'友', 官祿:'官', 事業:'官', 田宅:'田', 福德:'福', 父母:'父' };
-  // iztro 宮位 index 0 = 寅，逆時針排列；對應 4x4 格子的 [row, col]
-  const POS = [[4,1],[3,1],[2,1],[1,1],[1,2],[1,3],[1,4],[2,4],[3,4],[4,4],[4,3],[4,2]];
-  // 三方四正連線錨點（百分比座標，落在中宮邊界上）
-  const ANCHOR = [[25,75],[25,62.5],[25,37.5],[25,25],[37.5,25],[62.5,25],[75,25],[75,37.5],[75,62.5],[75,75],[62.5,75],[37.5,75]];
+  let curH = null; // 目前的運限資料（render 時更新）
 
-  const $ = (id) => document.getElementById(id);
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-  const yearGZ = (y) => STEMS[((y - 4) % 10 + 10) % 10] + BRANCHES[((y - 4) % 12 + 12) % 12];
-  const branchOfYear = (y) => BRANCHES[((y - 4) % 12 + 12) % 12];
-  // 五虎遁：由年干推月干
-  const monthGZ = (y, m) => {
-    const ys = ((y - 4) % 10 + 10) % 10;
-    const start = ((ys % 5) * 2 + 2) % 10;
-    return STEMS[(start + m - 1) % 10] + BRANCHES[(m + 1) % 12];
+  // 狀態
+  let A = null;            // 本命盤 astrolabe
+  let birthYear = 0;       // 出生農曆年
+  // sel = 選取宮位 index（三方四正）；ana = 財運／財庫分析 { kind, layer }；now = 今天的農曆年月
+  const state = { year: 0, month: 1, sel: null, ana: null, now: { year: 0, month: 0 }, name: '' };
+
+  // 三方四正：本宮、對宮(+6)、財帛位(-4)、官祿位(+4)
+  const SF_ORDER = ['本宮', '對宮', '財帛位', '官祿位'];
+  function sfRoles(sel) {
+    if (sel === null) return {};
+    return { [sel]: '本宮', [(sel + 6) % 12]: '對宮', [(sel + 8) % 12]: '財帛位', [(sel + 4) % 12]: '官祿位' };
+  }
+  const SHA = ['擎羊', '陀羅', '火星', '鈴星', '地空', '地劫'];
+  const JI_STARS = ['左輔', '右弼', '文昌', '文曲', '天魁', '天鉞', '祿存', '天馬'];
+  const show = { dec: false, yr: false, mo: false, adj: true, cs: false, ages: true }; // 預設只顯示本命（生年）盤
+  // 點了大限／流年／流月按鈕就自動打開該層顯示
+  const enableLayer = (k, id) => { show[k] = true; $(id).checked = true; };
+  // 層級相依：大限 → 流年 → 流月；關掉上層時下層一併關閉
+  const CHILD = { dec: ['yr', 'showYr'], yr: ['mo', 'showMo'] };
+  const disableLayer = (k, id) => {
+    show[k] = false; $(id).checked = false;
+    if (CHILD[k]) disableLayer(...CHILD[k]);
   };
+  // 依上層狀態鎖定下層的按鈕與勾選框
+  function syncLayerLocks() {
+    $('showYr').disabled = !show.dec;
+    $('showMo').disabled = !show.yr;
+    $('yrBtns').querySelectorAll('button').forEach((b) => { b.disabled = !show.dec; b.title = show.dec ? '' : '請先選擇大限'; });
+    $('moBtns').querySelectorAll('button').forEach((b) => { b.disabled = !show.yr; b.title = show.yr ? '' : '請先選擇流年'; });
+    $('yrHint').hidden = show.dec;
+    $('moHint').hidden = show.yr;
+  }
+  const isOn = (b) => b.getAttribute('aria-pressed') === 'true';
 
-  let state = null; // { astro, input, birthYear, sel: {dec, year, month}, focus, now }
-  let activeProfileId = null;
+  // 農曆 -> 陽曆（借 iztro 排盤取 solarDate）
+  function lunarToSolar(y, m, d, leap = false) {
+    return iztro.astro.byLunar(`${y}-${m}-${d}`, 0, '男', leap, false, LANG).solarDate;
+  }
+  function todayLunar() {
+    const n = new Date();
+    return iztro.astro.bySolar(`${n.getFullYear()}-${n.getMonth() + 1}-${n.getDate()}`, 0, '男', true, LANG).rawDates.lunarDate;
+  }
 
-  /* ===== 設定儲存 ===== */
-  const loadProfiles = () => {
+  // 時辰選單
+  TIMES.forEach(([n, r], i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = `${n}（${r}）`;
+    $('t').appendChild(o);
+  });
+  $('t').insertAdjacentHTML('afterbegin', '<option value="" disabled>請選擇</option>');
+  $('t').value = '';
+
+  // 舊版會自動記住上次輸入，改為不預填個資，順手清掉舊暫存
+  localStorage.removeItem('ziwei-input');
+
+  const syncLeap = () => { $('leapWrap').hidden = document.querySelector('input[name=cal]:checked').value !== 'lunar'; };
+  document.querySelectorAll('input[name=cal]').forEach((r) => r.addEventListener('change', syncLeap));
+  syncLeap();
+
+  // ── 已儲存名單（localStorage，只存在這台電腦的這個瀏覽器）──
+  const PF_KEY = 'ziwei-profiles';
+  const PF_MAX = 5;
+  let currentPf = null; // 目前載入的姓名
+
+  function loadProfiles() {
     try {
-      const arr = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
-      return Array.isArray(arr) ? arr.slice(0, MAX_PROFILES) : [];
-    } catch { return []; }
-  };
-  const saveProfiles = (arr) => localStorage.setItem(STORE_KEY, JSON.stringify(arr.slice(0, MAX_PROFILES)));
+      const arr = JSON.parse(localStorage.getItem(PF_KEY) || '[]');
+      return Array.isArray(arr) ? arr.slice(0, PF_MAX) : [];
+    } catch (_) { return []; }
+  }
+  function saveProfiles(arr) { localStorage.setItem(PF_KEY, JSON.stringify(arr)); }
+
+  function readForm() {
+    return {
+      name: $('nm').value.trim(),
+      cal: document.querySelector('input[name=cal]:checked').value,
+      g: document.querySelector('input[name=g]:checked').value,
+      y: parseInt($('y').value, 10), m: parseInt($('m').value, 10), d: parseInt($('d').value, 10),
+      t: $('t').value === '' ? NaN : parseInt($('t').value, 10),
+      leap: $('leap').checked
+    };
+  }
+  function fillForm(p) {
+    $('nm').value = p.name || '';
+    document.querySelector(`input[name=cal][value=${p.cal === 'solar' ? 'solar' : 'lunar'}]`).checked = true;
+    document.querySelector(`input[name=g][value=${p.g === '女' ? '女' : '男'}]`).checked = true;
+    $('y').value = p.y; $('m').value = p.m; $('d').value = p.d;
+    $('t').value = String(p.t); $('leap').checked = !!p.leap;
+    syncLeap();
+  }
+  function validate(f) {
+    const maxD = f.cal === 'lunar' ? 30 : 31;
+    if (!(f.y >= 1900 && f.y <= 2100) || !(f.m >= 1 && f.m <= 12) || !(f.d >= 1 && f.d <= maxD)) {
+      return `日期格式不正確：年 1900–2100、月 1–12、日 1–${maxD}。`;
+    }
+    if (!(f.t >= 0 && f.t <= 12)) return '請選擇出生時辰。';
+    return '';
+  }
+  const pfDesc = (p) => `${p.cal === 'lunar' ? '農' : '陽'} ${p.y}/${p.m}/${p.d}${p.leap && p.cal === 'lunar' ? '(閏)' : ''} ${TIMES[p.t][0]} ${p.g}`;
 
   function renderProfiles() {
     const list = loadProfiles();
-    const box = $('profiles');
-    let html = `<span>已存設定（${list.length}/${MAX_PROFILES}）：</span>`;
-    list.forEach((p) => {
-      const label = `${p.name || '未命名'}（${p.cal === 'lunar' ? '農' : '國'}${p.y}/${p.m}/${p.d}）`;
-      html += `<div class="slot${p.id === activeProfileId ? ' active' : ''}">
-        <button type="button" data-load="${esc(p.id)}" title="載入並排盤">${esc(label)}</button>
-        <button type="button" class="del" data-del="${esc(p.id)}" aria-label="刪除 ${esc(p.name || '未命名')}">✕</button></div>`;
-    });
-    for (let i = list.length; i < MAX_PROFILES; i++) html += `<div class="slot empty">空位</div>`;
-    box.innerHTML = html;
+    $('profiles').innerHTML = list.length
+      ? list.map((p, i) => `<span class="pf${p.name === currentPf ? ' on' : ''}">
+          <button type="button" class="load" data-i="${i}" aria-label="載入 ${esc(p.name)} 並排盤"><b>${esc(p.name)}</b><small>${esc(pfDesc(p))}</small></button>
+          <button type="button" class="del" data-i="${i}" aria-label="刪除 ${esc(p.name)}" title="刪除">×</button>
+        </span>`).join('') + `<span class="empty">${list.length}/${PF_MAX}</span>`
+      : '<span class="empty">尚無資料。輸入姓名與出生資料後按「儲存此人」。</span>';
   }
 
-  $('profiles').addEventListener('click', (e) => {
-    const loadId = e.target.dataset.load, delId = e.target.dataset.del;
-    if (loadId) {
-      const p = loadProfiles().find((x) => x.id === loadId);
-      if (!p) return;
-      fillForm(p);
-      activeProfileId = p.id;
-      renderProfiles();
-      draw(p);
-    } else if (delId) {
-      const p = loadProfiles().find((x) => x.id === delId);
-      if (!p || !confirm(`確定刪除「${p.name || '未命名'}」？`)) return;
-      saveProfiles(loadProfiles().filter((x) => x.id !== delId));
-      if (activeProfileId === delId) activeProfileId = null;
-      renderProfiles();
-    }
-  });
+  const flash = (t) => { $('msg').textContent = t; clearTimeout(flash.h); flash.h = setTimeout(() => { $('msg').textContent = ''; }, 3000); };
 
   $('saveBtn').addEventListener('click', () => {
-    const input = readForm();
-    if (!input) return;
+    $('err').textContent = '';
+    const f = readForm();
+    if (!f.name) { $('err').textContent = '請先輸入姓名再儲存。'; $('nm').focus(); return; }
+    const bad = validate(f);
+    if (bad) { $('err').textContent = bad; return; }
     const list = loadProfiles();
-    let idx = list.findIndex((x) => x.id === activeProfileId);
-    if (idx >= 0) {
-      // 表單內容跟目前載入的設定不同（例如改成 B 的資料）時，先問要覆蓋還是另存，避免誤蓋
-      const cur = list[idx];
-      const same = ['name', 'gender', 'cal', 'y', 'm', 'd', 'leap', 't'].every((k) => String(cur[k] ?? '') === String(input[k] ?? ''));
-      if (!same && !confirm(`目前載入的是「${cur.name || '未命名'}」，表單內容已經不同。\n\n按「確定」覆蓋「${cur.name || '未命名'}」\n按「取消」另存成新的一組`)) {
-        idx = -1;
-        activeProfileId = null;
-      }
-    }
-    if (idx >= 0) {
-      list[idx] = { ...input, id: activeProfileId };
-      setMsg(`已更新「${input.name || '未命名'}」`, true);
+    const at = list.findIndex((p) => p.name === f.name);
+    if (at >= 0) {
+      list[at] = f;
+    } else if (list.length >= PF_MAX) {
+      $('err').textContent = `已達上限 ${PF_MAX} 位，請先刪除一位再儲存。`;
+      return;
     } else {
-      if (list.length >= MAX_PROFILES) { setMsg(`最多只能存 ${MAX_PROFILES} 組設定，請先刪除一組`); return; }
-      activeProfileId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      list.push({ ...input, id: activeProfileId });
-      setMsg(`已儲存「${input.name || '未命名'}」`, true);
+      list.push(f);
     }
     saveProfiles(list);
+    currentPf = f.name;
     renderProfiles();
+    flash(at >= 0 ? `已更新「${f.name}」。` : `已儲存「${f.name}」。`);
+    build();
+  });
+
+  $('profiles').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const list = loadProfiles();
+    const p = list[+b.dataset.i];
+    if (!p) return;
+    if (b.classList.contains('del')) {
+      if (!confirm(`確定刪除「${p.name}」？`)) return;
+      list.splice(+b.dataset.i, 1);
+      saveProfiles(list);
+      if (currentPf === p.name) currentPf = null;
+      renderProfiles();
+      flash(`已刪除「${p.name}」。`);
+      return;
+    }
+    fillForm(p);
+    currentPf = p.name;
+    renderProfiles();
+    build();
   });
 
   $('clearBtn').addEventListener('click', () => {
-    $('form').reset();
-    $('leapWrap').hidden = true;
-    activeProfileId = null;
-    state = null;
-    $('out').innerHTML = '';
-    setMsg('');
+    ['nm', 'y', 'm', 'd'].forEach((id) => { $(id).value = ''; });
+    $('t').value = ''; $('leap').checked = false;
+    document.querySelector('input[name=cal][value=lunar]').checked = true;
+    document.querySelector('input[name=g][value=男]').checked = true;
+    syncLeap();
+    A = null; currentPf = null; state.sel = null; state.ana = null;
+    $('nav').hidden = true; $('board').hidden = true; $('sfsz').hidden = true; $('ana').hidden = true;
+    $('board').innerHTML = ''; $('summary').innerHTML = ''; $('err').textContent = '';
     renderProfiles();
   });
 
-  /* ===== 表單 ===== */
-  document.querySelectorAll('input[name=cal]').forEach((r) =>
-    r.addEventListener('change', () => { $('leapWrap').hidden = !document.querySelector('input[name=cal][value=lunar]').checked; }));
+  renderProfiles();
 
-  function setMsg(text, ok) { const m = $('msg'); m.textContent = text; m.style.color = ok ? '#1e7d3a' : ''; }
+  $('form').addEventListener('submit', (e) => { e.preventDefault(); build(); });
 
-  function fillForm(p) {
-    $('name').value = p.name || '';
-    document.querySelectorAll('input[name=gender]').forEach((r) => (r.checked = r.value === p.gender));
-    document.querySelectorAll('input[name=cal]').forEach((r) => (r.checked = r.value === p.cal));
-    $('y').value = p.y; $('m').value = p.m; $('d').value = p.d;
-    $('leap').checked = !!p.leap;
-    $('leapWrap').hidden = p.cal !== 'lunar';
-    $('t').value = String(p.t);
-  }
-
-  function readForm() {
-    const gender = document.querySelector('input[name=gender]:checked')?.value;
-    const cal = document.querySelector('input[name=cal]:checked')?.value || 'solar';
-    const y = parseInt($('y').value, 10), m = parseInt($('m').value, 10), d = parseInt($('d').value, 10);
-    const tRaw = $('t').value;
-    if (!gender) return setMsg('請選擇性別'), null;
-    if (!(y >= 1900 && y <= 2100)) return setMsg('年份需介於 1900~2100'), null;
-    if (!(m >= 1 && m <= 12)) return setMsg('月份需介於 1~12'), null;
-    const maxDay = cal === 'solar' ? new Date(y, m, 0).getDate() : 30;
-    if (!(d >= 1 && d <= maxDay)) return setMsg(`日期需介於 1~${maxDay}`), null;
-    if (tRaw === '') return setMsg('請選擇時辰'), null;
-    setMsg('');
-    return { name: $('name').value.trim(), gender, cal, y, m, d, leap: cal === 'lunar' && $('leap').checked, t: parseInt(tRaw, 10) };
-  }
-
-  $('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = readForm();
-    if (input) draw(input);
+  [['showDec','dec'],['showYr','yr'],['showMo','mo'],['showAdj','adj'],['showCs','cs'],['showAges','ages']].forEach(([id, k]) => {
+    $(id).addEventListener('change', () => {
+      if ($(id).checked) show[k] = true; else disableLayer(k, id);
+      if (A) render();
+    });
   });
 
-  /* ===== 排盤 ===== */
-  function lunarToSolar(y, m) {
-    // 借用 byLunar 做農曆→國曆換算（取該月十五）
-    return iztro.astro.byLunar(`${y}-${m}-15`, 0, '男', false, true, 'zh-TW').solarDate;
-  }
-
-  function draw(input) {
-    let a;
+  function build() {
+    $('err').textContent = '';
+    const f = readForm();
+    const { cal, g, y, m, d, t, leap } = f;
+    const bad = validate(f);
+    if (bad) { $('err').textContent = bad; return; }
     try {
-      a = input.cal === 'lunar'
-        ? iztro.astro.byLunar(`${input.y}-${input.m}-${input.d}`, input.t, input.gender, input.leap, true, 'zh-TW')
-        : iztro.astro.bySolar(`${input.y}-${input.m}-${input.d}`, input.t, input.gender, true, 'zh-TW');
-    } catch (err) {
-      setMsg('排盤失敗：' + err.message);
+      A = cal === 'lunar'
+        ? iztro.astro.byLunar(`${y}-${m}-${d}`, t, g, leap, true, LANG)
+        : iztro.astro.bySolar(`${y}-${m}-${d}`, t, g, true, LANG);
+    } catch (ex) {
+      $('err').textContent = '排盤失敗：' + ex.message;
       return;
     }
-    const birthYear = a.rawDates?.lunarDate?.lunarYear ?? input.y;
-    const now = a.horoscope(new Date());
-    const nowYear = birthYear + now.age.nominalAge - 1;
-    const nowMonth = (BRANCHES.indexOf(now.monthly.earthlyBranch) - 2 + 12) % 12 + 1;
-    const soulIdx = a.palaces.findIndex((p) => p.name === '命宮');
-    // 一開始只顯示本命盤，點選大限 / 流年 / 流月後才依序疊加
-    state = { astro: a, input, birthYear, focus: soulIdx, now: { year: nowYear, month: nowMonth }, sel: { dec: null, year: null, month: null }, h: null };
+    birthYear = A.rawDates.lunarDate.lunarYear;
+    state.sel = null;
+    state.ana = null;
+    state.name = f.name;
+    // 每次排新盤都先回到本命盤
+    [['dec', 'showDec'], ['yr', 'showYr'], ['mo', 'showMo']].forEach(([k, id]) => { show[k] = false; $(id).checked = false; });
+
+    // 預設流年流月 = 今天（農曆）；早於出生則用出生年
+    const tl = todayLunar();
+    state.now = { year: tl.lunarYear, month: tl.lunarMonth };
+    state.year = Math.max(tl.lunarYear, birthYear);
+    state.month = tl.lunarYear >= birthYear ? tl.lunarMonth : 1;
+    $('nav').hidden = false;
+    $('board').hidden = false;
     render();
   }
 
-  function selectDecade(idx) {
-    // 再點一次已選的大限 = 回到本命盤
-    state.sel = state.sel.dec === idx ? { dec: null, year: null, month: null } : { dec: idx, year: null, month: null };
-    computeAndRender();
+  function horoscopeNow() {
+    const solar = lunarToSolar(state.year, state.month, 15);
+    return { H: A.horoscope(solar, 0), solar };
   }
 
-  function sortedDecades() {
-    return state.astro.palaces.map((p, i) => i).sort((x, y) => state.astro.palaces[x].decadal.range[0] - state.astro.palaces[y].decadal.range[0]);
+  function decadeYears(p) {
+    return [birthYear + p.decadal.range[0] - 1, birthYear + p.decadal.range[1] - 1];
   }
 
-  function computeAndRender() {
-    const { sel, astro: a, birthYear } = state;
-    if (sel.dec == null) { state.h = null; render(); return; }
-    let y, m = 1;
-    if (sel.year != null) { y = sel.year; m = sel.month ?? 1; }
-    else y = birthYear + a.palaces[sel.dec].decadal.range[0] - 1;
-    try {
-      state.h = a.horoscope(lunarToSolar(y, m), state.input.t);
-    } catch (err) {
-      setMsg('運限計算失敗：' + err.message);
-      state.h = null;
-    }
-    render();
+  function renderNav(H) {
+    const decs = [...A.palaces].sort((a, b) => a.decadal.range[0] - b.decadal.range[0]);
+    $('decBtns').innerHTML = decs.map((p) => {
+      const [y0, y1] = decadeYears(p);
+      const on = show.dec && H.decadal.index === p.index;
+      const nowAge = state.now.year - birthYear + 1;
+      const isNow = nowAge >= p.decadal.range[0] && nowAge <= p.decadal.range[1];
+      return `<button type="button" data-idx="${p.index}" aria-pressed="${on}"${isNow ? ' class="now" title="目前大限"' : ''}>${p.decadal.range[0]}–${p.decadal.range[1]}歲 ${esc(p.heavenlyStem + p.earthlyBranch)}<small>${y0}–${y1}｜${esc(p.name)}</small></button>`;
+    }).join('');
+    $('decBtns').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      if (isOn(b)) { disableLayer('dec', 'showDec'); render(); return; } // 再按一次取消
+      const p = A.palaces[+b.dataset.idx];
+      let [y0, y1] = decadeYears(p);
+      if (p.decadal.range[0] === decs[0].decadal.range[0]) y0 = birthYear; // 起運前的年份併入第一限
+      if (state.year < y0 || state.year > y1) state.year = Math.min(Math.max(y0, 1900), 2100);
+      enableLayer('dec', 'showDec');
+      render();
+    }));
+
+    // 流年：目前大限內的年份
+    const cur = A.palaces[H.decadal.index];
+    let [y0, y1] = decadeYears(cur);
+    if (cur.decadal.range[0] === decs[0].decadal.range[0]) y0 = birthYear;
+    const years = [];
+    for (let y = Math.max(y0, 1900); y <= Math.min(y1, 2100); y++) years.push(y);
+    $('yrBtns').innerHTML = years.map((y) =>
+      `<button type="button" data-y="${y}" aria-pressed="${show.yr && y === state.year}"${y === state.now.year ? ' class="now"' : ''}>${y} ${yearGZ(y)}<small>虛歲 ${y - birthYear + 1}</small></button>`
+    ).join('');
+    $('yrBtns').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      if (isOn(b)) disableLayer('yr', 'showYr'); // 再按一次取消
+      else { state.year = +b.dataset.y; enableLayer('yr', 'showYr'); }
+      render();
+    }));
+
+    $('moBtns').innerHTML = MONTHS.map((n, i) =>
+      `<button type="button" data-m="${i + 1}" aria-pressed="${show.mo && i + 1 === state.month}"${state.year === state.now.year && i + 1 === state.now.month ? ' class="now"' : ''}>${n}月<small>${monthGZ(state.year, i + 1)}</small></button>`
+    ).join('');
+    $('moBtns').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      if (isOn(b)) disableLayer('mo', 'showMo'); // 再按一次取消
+      else { state.month = +b.dataset.m; enableLayer('mo', 'showMo'); }
+      render();
+    }));
+    syncLayerLocks();
   }
 
-  /* ===== 繪製 ===== */
-  function scopes() {
-    const { h, sel } = state;
-    if (!h) return [];
-    const list = [{ key: 'dec', pre: '大', title: '大限', data: h.decadal }];
-    if (sel.year != null) list.push({ key: 'year', pre: '年', title: '流年', data: h.yearly });
-    if (sel.month != null) list.push({ key: 'month', pre: '月', title: '流月', data: h.monthly });
-    return list;
+  function activeLayers() {
+    return LAYERS.filter((L) => show[L.cls]);
   }
 
-  function starHTML(s, cls, palace, sc) {
-    let tags = '';
-    if (s.mutagen) tags += `<span class="tag birth" title="生年化${s.mutagen}">${s.mutagen}</span>`;
-    sc.forEach(({ key, title, data }) => {
-      const k = data.mutagen.indexOf(s.name);
-      if (k >= 0) tags += `<span class="tag ${key}" title="${title}化${MUT[k]}">${MUT[k]}</span>`;
+  // owner = 星曜所在的宮位（用宮干判斷自化）
+  function starHTML(s, H, owner) {
+    const isMajor = s.type === 'major';
+    const extra = s.name === '祿存' ? ' lucun' : (s.name === '地空' || s.name === '地劫') ? ' kongjie' : '';
+    let html = `<span class="star ${isMajor ? 'major' : 'minor'} ${s.type === 'tough' ? 'tough' : ''}${extra}"><span class="nm">${esc(s.name)}</span>`;
+    if (s.brightness) html += `<span class="bri">${esc(s.brightness)}</span>`;
+    if (s.mutagen) html += `<span class="mg birth" title="生年化${esc(s.mutagen)}">${esc(s.mutagen)}</span>`;
+    activeLayers().forEach((L) => {
+      const k = H[L.key].mutagen.indexOf(s.name);
+      if (k >= 0) html += `<span class="mg ${L.cls}" title="${L.label}化${MG[k]}">${MG[k]}</span>`;
     });
-    const self = SIHUA[palace.heavenlyStem]?.indexOf(s.name);
-    if (self >= 0) tags += `<span class="tag self m${self}" title="自化${MUT[self]}">↑${MUT[self]}</span>`;
-    if (s.name === '祿存') cls += ' lucun';
-    if (s.name === '地空' || s.name === '地劫') cls += ' kongjie';
-    return `<div class="star ${cls}"><span class="sn">${esc(s.name)}</span><span class="br">${esc(s.brightness || '')}</span>${tags}</div>`;
+    const self = owner ? (SIHUA[owner.heavenlyStem] || []).indexOf(s.name) : -1;
+    if (self >= 0) html += `<span class="mg self m${self}" title="自化${MG[self]}（${esc(owner.heavenlyStem)}干）">↑${MG[self]}</span>`;
+    return html + '</span>';
   }
 
-  function palaceHTML(p, i, sc) {
-    const { sel, birthYear } = state;
-    const tri = [(state.focus + 4) % 12, (state.focus + 6) % 12, (state.focus + 8) % 12];
-    const inTri = i === state.focus || tri.includes(i);
+  function cellHTML(p, H) {
+    const i = p.index;
+    const cls = ['cell'];
+    // 命宮外框只標最細的一層：流月 > 流年 > 大限 > 本命
+    const top = show.mo ? 'mo' : show.yr ? 'yr' : show.dec ? 'dec' : 'birth';
+    const mingIdx = { mo: H.monthly.index, yr: H.yearly.index, dec: H.decadal.index,
+      birth: A.palaces.findIndex((q) => q.name === '命宮') }[top];
+    if (mingIdx === i) cls.push(top + '-ming');
+    const roles = sfRoles(state.sel);
+    const role = roles[i];
+    if (state.sel !== null) cls.push(role === '本宮' ? 'sf-self' : role === '對宮' ? 'sf-opp' : role ? 'sf-tri' : 'sf-dim');
+    if (role) cls.push('sf-on');
+    const [r, c] = POS[p.earthlyBranch];
+    const act = activeLayers();
 
-    // 宮名以目前最上層運限為準（月 > 年 > 大 > 本命），借 / 夾的稱呼才會跟著運限走
-    const nameAt = (j) => {
-      const top = sc[sc.length - 1];
-      const full = top ? top.data.palaceNames[j] : state.astro.palaces[j].name;
-      return { short: SHORT[full] || full, full: (top ? top.title : '本命') + full, key: top ? top.key : '' };
-    };
-
-    // 三方四正中若本宮無主星，借對宮主星（含四化）並以虛線框區隔
-    let borrowed = '';
-    if (inTri && p.majorStars.length === 0) {
-      const oj = (i + 6) % 12, op = state.astro.palaces[oj], on = nameAt(oj);
-      if (op.majorStars.length) {
-        borrowed = `<div class="borrow" title="借對宮（${esc(on.full)}）主星">
-          <span class="borrow-lbl ${on.key}">借${esc(on.short)}</span>
-          ${op.majorStars.map((s) => starHTML(s, 'major', op, sc)).join('')}</div>`;
-      }
+    let majors = p.majorStars.map((s) => starHTML(s, H, p)).join('');
+    if (!majors) {
+      const opp = A.palaces[(i + 6) % 12];
+      // 選取宮位的三方四正（本宮／對宮／財帛位／官祿位）中若有空宮：借其對宮主星（連同祿權科忌）並以虛線框標示
+      majors = role && opp.majorStars.length
+        ? `<span class="borrow" title="空宮，借對宮 ${esc(opp.earthlyBranch)} ${esc(opp.name)} 主星"><span class="borrow-tag">借${esc(opp.earthlyBranch)}</span>${opp.majorStars.map((s) => starHTML(s, H, opp)).join('')}</span>`
+        : '<span class="star minor" style="color:#aaa"><span class="nm">空宮</span></span>';
     }
-
-    // 三方四正中有天相：拉進左右鄰宮「有四化」的主星（生年 + 目前疊加的運限），以虛線框區隔
+    // 天相夾宮：三方四正中有天相時，拉進左右鄰宮「有四化」的主星與輔星，以紫色虛線框標示
     let jia = '';
-    if (inTri && p.majorStars.some((s) => s.name === '天相')) {
-      const hasMut = (s) => !!s.mutagen || sc.some(({ data }) => data.mutagen.includes(s.name));
+    if (role && p.majorStars.some((s) => s.name === '天相')) {
+      const hasMut = (s) => !!s.mutagen || act.some((L) => H[L.key].mutagen.includes(s.name));
       jia = [(i + 11) % 12, (i + 1) % 12].map((j) => {
-        const np = state.astro.palaces[j], nn = nameAt(j);
-        // 主星 + 輔星都看（化忌可能落在文昌、文曲）
-        const list = [...np.majorStars.map((s) => [s, 'major']), ...np.minorStars.map((s) => [s, 'minor'])].filter(([s]) => hasMut(s));
+        const np = A.palaces[j];
+        const list = [...np.majorStars, ...np.minorStars].filter(hasMut);
         if (!list.length) return '';
-        return `<div class="borrow jia" title="天相夾宮：鄰宮（${esc(nn.full)}）四化星">
-          <span class="borrow-lbl ${nn.key}">夾${esc(nn.short)}</span>
-          ${list.map(([s, c]) => starHTML(s, c, np, sc)).join('')}</div>`;
+        return `<span class="borrow jia" title="天相夾宮：鄰宮 ${esc(np.earthlyBranch)} ${esc(np.name)} 的四化星"><span class="borrow-tag">夾${esc(np.earthlyBranch)}</span>${list.map((s) => starHTML(s, H, np)).join('')}</span>`;
       }).join('');
     }
+    const minors = p.minorStars.map((s) => starHTML(s, H, p)).join('');
+    const adj = show.adj && p.adjectiveStars.length
+      ? p.adjectiveStars.map((s) => `<span class="star adjs"><span class="nm">${esc(s.name)}</span></span>`).join('')
+      : '';
 
-    const stars = borrowed + [
-      ...p.majorStars.map((s) => starHTML(s, 'major', p, sc)),
-      jia,
-      ...p.minorStars.map((s) => starHTML(s, 'minor', p, sc)),
-      ...p.adjectiveStars.map((s) => starHTML(s, 'adj', p, sc)),
-    ].join('');
+    // 運限流曜直排；iztro 名稱「運馬／流喜／月羊」改成跟宮名同一套前綴「限馬／年喜／月羊」，順序流月→流年→大限
+    const flows = act.slice().reverse().flatMap((L) => (H[L.key].stars?.[i] || []).map((s) => {
+      const nm = /^[運流月]/.test(s.name) && s.name.length > 1 ? L.prefix + s.name.slice(1) : s.name;
+      return `<span class="star flw ${L.cls}" title="${L.label}${esc(s.name)}"><span class="nm">${esc(nm)}</span></span>`;
+    }));
+    const flow = flows.length ? `<div class="stars flow">${flows.join('')}</div>` : '';
 
-    // 運限流曜：iztro 名稱為「運馬 / 流喜 / 月羊」，改成「大馬 / 年喜 / 月羊」；直排，流月→流年→大限由左到右
-    const hstars = [...sc].reverse().map(({ key, pre, data }) => (data.stars?.[i] || []).map((s) => {
-      const base = /^[運流月]/.test(s.name) && s.name.length > 1 ? s.name.slice(1) : s.name;
-      return `<span class="${key}" title="${esc(s.name)}">${pre}${esc(base)}</span>`;
-    }).join('')).join('');
-
-    // 流年歲數：該宮地支 = 流年地支
-    const lnAges = [];
-    for (let age = 1; age <= 120 && lnAges.length < 6; age++) if (branchOfYear(birthYear + age - 1) === p.earthlyBranch) lnAges.push(age);
-
-    // 運限宮名：由上而下 月 → 年 → 大，最下方為本命宮名
-    const hl = [...sc].reverse().map(({ key, pre, data }) => `<div class="${key}">${pre}${esc(SHORT[data.palaceNames[i]] || data.palaceNames[i])}</div>`).join('');
-
-    // 流月標籤：選了流年後，標出每宮對應的流月（月份 + 月干）
-    let mlabel = '';
-    if (sel.year != null && state.h) {
-      const idx1 = (state.h.monthly.index - ((sel.month ?? 1) - 1) + 12) % 12; // 正月流月命宮所在
-      const m = (i - idx1 + 12) % 12 + 1;
-      mlabel = `<span class="ml">${MONTHS[m - 1]}${monthGZ(sel.year, m)[0]}</span>`;
+    // 流年歲數（該宮地支＝流年地支）與小限歲數
+    let ages = '';
+    if (show.ages) {
+      const ln = [];
+      for (let a = 1; a <= 120 && ln.length < 6; a++) if (branchOfYear(birthYear + a - 1) === p.earthlyBranch) ln.push(a);
+      ages = `<div class="ages">流年 ${ln.join(',')}<br>小限 ${p.ages.slice(0, 6).join(',')}</div>`;
     }
-
-    // 財帛 / 田宅宮位的分析按鈕：本命、大限、流年各自的財 / 田都有一顆
-    const anaLayers = [{ key: 'birth', pre: '本', names: state.astro.palaces.map((x) => x.name) }]
-      .concat(sc.filter((x) => x.key !== 'month').map((x) => ({ key: x.key, pre: x.pre, names: x.data.palaceNames })));
+    // 十二神
+    const gods = show.cs
+      ? `<div class="gods">${esc(p.changsheng12)}・<span class="bs">${esc(p.boshi12)}</span><br>${esc(p.jiangqian12)}・${esc(p.suiqian12)}</div>`
+      : '';
+    // 流月標籤：選了流年後，每宮標出對應的流月與月干
+    let mlabel = '';
+    if (show.yr) {
+      const idx1 = (H.monthly.index - (state.month - 1) + 12) % 12; // 正月流月命宮所在
+      const m = (i - idx1 + 12) % 12 + 1;
+      mlabel = `<div class="mlabel" title="流月：農曆${MONTHS[m - 1]}月 ${monthGZ(state.year, m)}">${MONTHS[m - 1]}月${monthGZ(state.year, m)[0]}</div>`;
+    }
+    // 財運／財庫按鈕：本命、大限、流年各層的財帛宮、田宅宮各一顆
+    const anaLayers = [{ key: 'birth', pre: '本', names: A.palaces.map((x) => x.name) }]
+      .concat(act.filter((L) => L.cls !== 'mo').map((L) => ({ key: L.cls, pre: L.prefix, names: H[L.key].palaceNames })));
     const anaBtns = anaLayers.flatMap((L) => [['財帛', 'wealth', '財運'], ['田宅', 'vault', '財庫']]
       .filter(([nm]) => L.names[i] === nm)
       .map(([, kind, t]) => {
-        const on = state.ana && state.ana.kind === kind && state.ana.layer === L.key;
-        return `<button type="button" class="pbtn ${L.key}" data-ana="${kind}" data-layer="${L.key}" aria-pressed="${!!on}"
-          title="計算${L.pre === '本' ? '本命' : L.pre === '大' ? '大限' : '流年'}${t}分數">${L.pre}${t}</button>`;
+        const on = !!state.ana && state.ana.kind === kind && state.ana.layer === L.key;
+        return `<button type="button" class="pbtn ${L.key}" data-ana="${kind}" data-layer="${L.key}" aria-pressed="${on}" title="計算${LAYER_TITLE[L.key]}${t}分數">${L.pre}${t}</button>`;
       })).join('');
 
-    const cls = ['palace'];
-    if (i === state.focus) cls.push('focus'); else if (tri.includes(i)) cls.push('tri');
-    if (state.h && state.h.decadal.index === i) cls.push('cur-dec');
-    if (sel.year != null && state.h && state.h.yearly.index === i) cls.push('cur-year');
-
-    const [r, c] = POS[i];
-    return `<div class="${cls.join(' ')}" style="grid-row:${r};grid-column:${c}" data-palace="${i}" tabindex="0"
-              aria-label="${esc(p.name)}宮 ${esc(p.heavenlyStem + p.earthlyBranch)}">
-      <div class="stars">${stars}</div>
-      ${anaBtns ? `<div class="pbtns">${anaBtns}</div>` : ''}
-      <div class="pmidrow">
-        <div class="ages">流年 ${lnAges.join(',')}<br>小限 ${p.ages.slice(0, 6).join(',')}</div>
-        <div class="hstars">${hstars}</div>
-      </div>
-      <div class="pbottom">
-        <div class="gods"><span class="bs">${esc(p.boshi12)}</span><br>${esc(p.jiangqian12)}<br>${esc(p.suiqian12)}${mlabel}</div>
-        <div class="pmid">
-          <div class="range">${p.decadal.range[0]}~${p.decadal.range[1]}</div>
-          <div class="hlabels">${hl}</div>
-          <div class="pname">${esc(p.name)}${p.isBodyPalace ? '<span class="body-tag">身</span>' : ''}</div>
-        </div>
-        <div class="pright"><div class="cs">${esc(p.changsheng12)}</div><div class="gz">${esc(p.heavenlyStem)}<br>${esc(p.earthlyBranch)}</div></div>
-      </div>
-    </div>`;
-  }
-
-  function centerHTML() {
-    const { astro: a, input, sel, h, birthYear } = state;
-    const yinyang = '甲丙戊庚壬'.includes(a.chineseDate[0]) ? '陽' : '陰';
-    const pillars = a.chineseDate.split(' ');
-    const pLabel = ['年', '月', '日', '時'];
-    let selInfo = '';
-    if (h && sel.dec != null) {
-      const dp = a.palaces[sel.dec];
-      selInfo += `<span class="dec">大限 ${dp.decadal.range[0]}~${dp.decadal.range[1]}（${dp.heavenlyStem}${dp.earthlyBranch}）</span>`;
-      if (sel.year != null) selInfo += `　<span class="year">流年 ${sel.year}（${yearGZ(sel.year)}）${sel.year - birthYear + 1}歲</span>`;
-      if (sel.month != null) selInfo += `　<span class="month">流月 ${MONTHS[sel.month - 1]}（${monthGZ(sel.year, sel.month)}）</span>`;
-    }
-    return `<div class="center">
-      <h2>紫微斗數</h2>
-      <div class="row"><span><span class="k">姓名：</span>${esc(input.name || '匿名')}</span><span>${yinyang}${esc(a.gender)}</span><span>${esc(a.fiveElementsClass)}</span></div>
-      <div><span class="k">國曆：</span>${esc(a.solarDate)}　${esc(a.time)}（${esc(a.timeRange)}）</div>
-      <div><span class="k">農曆：</span>${esc(a.lunarDate)}</div>
-      <div class="pillars">${pillars.map((g, k) => `<div><span>${esc(g[0])}</span><span>${esc(g[1])}</span><small>${pLabel[k]}</small></div>`).join('')}</div>
-      <div class="row"><span><span class="k">命主：</span>${esc(a.soul)}</span><span><span class="k">身主：</span>${esc(a.body)}</span><span><span class="k">生肖：</span>${esc(a.zodiac)}</span><span><span class="k">星座：</span>${esc(a.sign)}</span></div>
-      <div class="sel-info">${selInfo}</div>
-      <div class="legend">四化底色：<b style="background:var(--birth)">生年</b> <b style="background:var(--dec)">大限</b> <b style="background:var(--year)">流年</b> <b style="background:var(--month)">流月</b>
-        　框線字 ↑ = 自化　<span style="border:1.5px dashed var(--major);padding:0 3px;border-radius:3px">借</span> = 借對宮主星　<span style="border:1.5px dashed var(--quan);padding:0 3px;border-radius:3px">夾</span> = 天相夾宮四化星　<span style="border:1.5px dashed var(--lu);padding:0 3px;border-radius:3px;color:var(--minor)">祿存</span>　<span style="color:var(--dec)">大</span>/<span style="color:var(--year)">年</span>/<span style="color:var(--month)">月</span> = 運限</div>
-    </div>`;
-  }
-
-  function linesSVG() {
-    const f = state.focus;
-    const pt = (i) => ANCHOR[i].join(',');
-    const tri = [f, (f + 4) % 12, (f + 8) % 12].map(pt).join(' ');
-    const [ox, oy] = ANCHOR[(f + 6) % 12], [fx, fy] = ANCHOR[f];
-    return `<svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <polygon points="${tri}" fill="none" stroke="#c9a227" stroke-width="0.25" stroke-dasharray="1,0.6"/>
-      <line x1="${fx}" y1="${fy}" x2="${ox}" y2="${oy}" stroke="#c9a227" stroke-width="0.25" stroke-dasharray="1,0.6"/>
-    </svg>`;
-  }
-
-  function yunHTML() {
-    const { astro: a, sel, birthYear, now } = state;
-    const decCells = sortedDecades().map((i) => {
-      const p = a.palaces[i];
-      const isNow = (now.year - birthYear + 1) >= p.decadal.range[0] && (now.year - birthYear + 1) <= p.decadal.range[1];
-      return `<button type="button" class="cell${sel.dec === i ? ' sel' : ''}${isNow ? ' now' : ''}" data-dec="${i}">${p.decadal.range[0]}~${p.decadal.range[1]}<br>${p.heavenlyStem}${p.earthlyBranch}限</button>`;
+    // 左下宮名：流月、流年、大限 由上到下
+    const layerNames = act.slice().reverse().map((L) => {
+      const nm = H[L.key].palaceNames[i];
+      return `<span class="${L.cls}">${L.prefix}${esc(SHORT[nm] || nm)}</span>`;
     }).join('');
 
-    let yearCells = '';
-    if (sel.dec != null) {
-      const [s, e] = a.palaces[sel.dec].decadal.range;
-      for (let age = s; age <= e; age++) {
-        const y = birthYear + age - 1;
-        yearCells += `<button type="button" class="cell${sel.year === y ? ' sel' : ''}${now.year === y ? ' now' : ''}" data-year="${y}">${y}年<br>${yearGZ(y)} ${age}歲</button>`;
-      }
-    }
+    const tags = [
+      p.isBodyPalace ? '<span class="tag body">身</span>' : '',
+      p.isOriginalPalace ? '<span class="tag laiyin">來因</span>' : '',
+      show.yr && H.age.index === i ? '<span class="tag xiao">小限</span>' : '',
+      role ? `<span class="tag sf">${role}</span>` : ''
+    ].join('');
 
-    let monthCells = '';
-    if (sel.year != null) {
-      monthCells = MONTHS.map((name, k) => {
-        const m = k + 1;
-        const isNow = now.year === sel.year && now.month === m;
-        return `<button type="button" class="cell${sel.month === m ? ' sel' : ''}${isNow ? ' now' : ''}" data-month="${m}">${name}<br>${monthGZ(sel.year, m)}</button>`;
-      }).join('');
-    }
-
-    return `<div class="yun">
-      <div class="yun-row"><div class="yun-head">大限</div><div class="yun-cells">${decCells}</div></div>
-      <div class="yun-row"><div class="yun-head">流年</div><div class="yun-cells" style="grid-template-columns:repeat(10,1fr)">${yearCells || '<div class="cell" style="grid-column:1/11;cursor:default">請先選擇大限</div>'}</div></div>
-      <div class="yun-row"><div class="yun-head">流月</div><div class="yun-cells">${monthCells || '<div class="cell" style="grid-column:1/13;cursor:default">請先選擇流年</div>'}</div></div>
-    </div>
-    <div class="hint">預設只顯示本命盤。點宮位可切換三方四正；依序點選大限 / 流年 / 流月可疊加運限四化與流曜，再點一次已選的項目可取消該層。粗體底線為當前時間。</div>`;
+    return `<div class="${cls.join(' ')}" style="grid-row:${r};grid-column:${c}" data-idx="${i}" tabindex="0" role="button"
+      aria-pressed="${state.sel === i}" aria-label="${esc(p.earthlyBranch)}宮 ${esc(p.name)}${role ? '（' + role + '）' : ''}，點選查看三方四正">
+      <div class="stars">${majors}${jia}${minors}${adj}</div>
+      ${flow}
+      ${anaBtns ? `<div class="pbtns">${anaBtns}</div>` : ''}
+      <div class="spacer"></div>
+      <div class="foot">
+        <div class="left">${ages}${gods}${p.decadal.range[0]}–${p.decadal.range[1]}${mlabel}<div class="layers">${layerNames}</div></div>
+        <div class="right"><div>${tags}</div><span class="gz">${esc(p.heavenlyStem + p.earthlyBranch)}</span> <span class="pname">${esc(p.name)}</span></div>
+      </div>
+    </div>`;
   }
 
-  /* ===== 財運 / 財庫分析 ===== */
-  const SHA = ['擎羊', '陀羅', '火星', '鈴星'];
+  function centerHTML(H, solar) {
+    const age = state.year - birthYear + 1;
+    const dp = A.palaces[H.decadal.index];
+    return `<div class="center">
+      <h2>本命資料</h2>
+      <table>
+        <tr><th>姓名</th><td>${esc(state.name || '匿名')}　${'甲丙戊庚壬'.includes(A.chineseDate[0]) ? '陽' : '陰'}${esc(A.gender)}</td></tr>
+        <tr><th>生肖</th><td>${esc(A.zodiac)}　${esc(A.sign)}</td></tr>
+        <tr><th>陽曆</th><td>${esc(A.solarDate)}　${esc(A.time)}（${esc(A.timeRange)}）</td></tr>
+        <tr><th>農曆</th><td>${esc(A.lunarDate)}</td></tr>
+        <tr><th>四柱</th><td><div class="pillars">${A.chineseDate.split(' ').map((g, k) => `<div><span>${esc(g[0])}</span><span>${esc(g[1])}</span><small>${'年月日時'[k]}</small></div>`).join('')}</div></td></tr>
+        <tr><th>五行局</th><td>${esc(A.fiveElementsClass)}</td></tr>
+        <tr><th>命宮／身宮</th><td>${esc(A.earthlyBranchOfSoulPalace)}／${esc(A.earthlyBranchOfBodyPalace)}　命主 ${esc(A.soul)}　身主 ${esc(A.body)}</td></tr>
+      </table>
+      <div class="now">
+        ${[
+          show.dec ? `<b style="color:var(--dec)">大限</b> ${esc(H.decadal.heavenlyStem + H.decadal.earthlyBranch)}（${dp.decadal.range[0]}–${dp.decadal.range[1]}歲，本命${esc(dp.name)}）` : '',
+          show.yr ? `<b style="color:var(--yr)">流年</b> ${state.year} ${esc(H.yearly.heavenlyStem + H.yearly.earthlyBranch)}年　虛歲 ${age}　小限 ${esc(H.age.earthlyBranch)}` : '',
+          show.mo ? `<b style="color:var(--mo)">流月</b> 農曆${MONTHS[state.month - 1]}月 ${esc(H.monthly.heavenlyStem + H.monthly.earthlyBranch)}（以陽曆 ${esc(solar)} 推算）` : ''
+        ].filter(Boolean).join('<br>') || '<b style="color:var(--birth)">本命盤</b>（生年四化）。點上方大限／流年／流月按鈕即可疊加運限。'}
+      </div>
+      <div class="legend">
+        四化顏色依層級：<span class="mg birth">生年</span><span class="mg dec">大限</span><span class="mg yr">流年</span><span class="mg mo">流月</span>，框內字為祿／權／科／忌。<br>
+        外框（只標目前最細一層）：<b style="color:var(--birth)">紅＝本命命宮</b>、<b style="color:var(--dec)">綠＝大限命宮</b>、<b style="color:var(--yr)">藍＝流年命宮</b>、<b style="color:var(--mo)">棕＝流月命宮</b>。宮位左下「限命／年財／月子」為各層宮名。<br>
+        <span class="mg self m0">↑祿</span>＝自化（宮干化出本宮星）；選宮後三方四正內：<span class="borrow-tag">借</span>＝空宮借對宮主星、<span class="borrow-tag" style="background:var(--quan)">夾</span>＝天相夾宮四化星、<span style="outline:1.5px dashed var(--lu);padding:0 2px">祿存</span>、<span style="outline:1.5px solid #888;background:#e6e6e6;padding:0 2px">空劫</span>。財帛／田宅宮的「本財運、限財庫…」按鈕可開啟財運分析。
+      </div>
+    </div>`;
+  }
+
+  function summaryHTML(H) {
+    // 星曜 -> 宮位索引
+    const where = {};
+    A.palaces.forEach((p) => [...p.majorStars, ...p.minorStars].forEach((s) => { where[s.name] = p.index; }));
+    const loc = (star, layerKey) => {
+      const i = where[star];
+      if (i === undefined) return esc(star);
+      const p = A.palaces[i];
+      const layerName = layerKey ? '／' + esc(H[layerKey].palaceNames[i]) : '';
+      return `${esc(star)} <span style="color:#57606a">→ ${esc(p.earthlyBranch)} 本${esc(p.name)}${layerName}</span>`;
+    };
+    const birthMg = MG.map((m) => {
+      for (const p of A.palaces) for (const s of [...p.majorStars, ...p.minorStars]) if (s.mutagen === m) return s.name;
+      return '';
+    });
+    const rows = [
+      ['生年', A.chineseDate.split(' ')[0], birthMg, null],
+      ...activeLayers().map((L) => [L.label, H[L.key].heavenlyStem + H[L.key].earthlyBranch, H[L.key].mutagen, L.key])
+    ];
+    return `<table>
+      <caption>四化總表${activeLayers().length ? `（${state.year} 年 農曆${MONTHS[state.month - 1]}月）` : '（本命）'}</caption>
+      <thead><tr><th scope="col">層級</th><th scope="col">干支</th>${MG.map((m) => `<th scope="col">化${m}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(([n, gz, arr, k]) => `<tr><th scope="row">${n}</th><td>${esc(gz)}</td>${arr.map((s) => `<td>${s ? loc(s, k) : '—'}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  function render() {
+    let H, solar;
+    try {
+      ({ H, solar } = horoscopeNow());
+    } catch (ex) {
+      $('err').textContent = '運限計算失敗：' + ex.message;
+      return;
+    }
+    curH = H;
+    renderNav(H);
+    // 財運／財庫分析：對應層級被關掉就失效；有效時三方四正自動對到該層的財帛／田宅
+    if (state.ana && ((state.ana.layer === 'dec' && !show.dec) || (state.ana.layer === 'yr' && !show.yr))) { state.ana = null; state.sel = null; }
+    let ana = null, other = null;
+    if (state.ana) {
+      ana = analyze(state.ana.kind, state.ana.layer);
+      if (ana.f >= 0) {
+        state.sel = ana.f;
+        other = analyze(ana.kind === 'wealth' ? 'vault' : 'wealth', state.ana.layer);
+        if (other.f < 0) other = null;
+      } else { ana = null; state.ana = null; }
+    }
+    $('board').innerHTML = A.palaces.map((p) => cellHTML(p, H)).join('') + centerHTML(H, solar)
+      + '<svg id="sfLines" aria-hidden="true"></svg>';
+    $('ana').hidden = !ana;
+    $('ana').innerHTML = ana ? anaHTML(ana, other) : '';
+    $('sfsz').hidden = false;
+    $('sfsz').innerHTML = sfszHTML(H);
+    $('summary').innerHTML = summaryHTML(H);
+    drawLines();
+  }
+
+  // 在命盤上畫三方四正連線：本宮–財帛位–官祿位 三角形 + 本宮–對宮
+  function drawLines() {
+    const svg = $('sfLines');
+    if (!svg) return;
+    if (state.sel === null) { svg.innerHTML = ''; return; }
+    const board = $('board').getBoundingClientRect();
+    const ctr = (i) => {
+      const r = $('board').querySelector(`.cell[data-idx="${i}"]`).getBoundingClientRect();
+      return [r.left - board.left + r.width / 2, r.top - board.top + r.height / 2];
+    };
+    const s = state.sel;
+    const [me, opp, cai, guan] = [s, (s + 6) % 12, (s + 8) % 12, (s + 4) % 12].map(ctr);
+    const ln = (a, b) => `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`;
+    svg.innerHTML = ln(me, cai) + ln(cai, guan) + ln(guan, me) + ln(me, opp)
+      + [me, opp, cai, guan].map((p, k) => `<circle cx="${p[0]}" cy="${p[1]}" r="${k ? 4 : 6}"/>`).join('');
+  }
+  window.addEventListener('resize', drawLines);
+
+  // 點選宮位（再點一次或按 Esc 取消）
+  function selectPalace(i) {
+    state.sel = state.sel === i ? null : i;
+    render();
+    if (state.sel !== null) $('board').querySelector(`.cell[data-idx="${i}"]`)?.focus({ preventScroll: true });
+  }
+  $('board').addEventListener('click', (e) => {
+    const ab = e.target.closest('[data-ana]');
+    if (ab) { // 財運／財庫按鈕：再按一次取消
+      const { ana: kind, layer } = ab.dataset;
+      const same = state.ana && state.ana.kind === kind && state.ana.layer === layer;
+      state.ana = same ? null : { kind, layer };
+      if (same) state.sel = null;
+      render();
+      if (!same) $('ana').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+    const c = e.target.closest('.cell');
+    if (c) { state.ana = null; selectPalace(+c.dataset.idx); } // 手動點宮位就離開分析模式
+  });
+  $('board').addEventListener('keydown', (e) => {
+    if (e.target.closest('[data-ana]')) return; // 按鈕自己處理 Enter／空白鍵
+    const c = e.target.closest('.cell');
+    if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); selectPalace(+c.dataset.idx); }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && A && (state.sel !== null || state.ana)) { state.sel = null; state.ana = null; render(); }
+  });
+  $('sfsz').addEventListener('click', (e) => {
+    if (e.target.id === 'sfClear') { state.sel = null; state.ana = null; render(); }
+  });
+
+  /* ===== 字型切換（記在 localStorage）===== */
+  const FONT_KEY = 'ziwei-font';
+  function applyFont(f) {
+    if (!['hei', 'ming', 'kai'].includes(f)) f = 'hei';
+    if (f === 'hei') delete document.documentElement.dataset.font; else document.documentElement.dataset.font = f;
+    document.querySelectorAll('#fontbar button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.font === f)));
+    try { localStorage.setItem(FONT_KEY, f); } catch (_) { /* 無痕模式忽略 */ }
+    if (A) drawLines(); // 字型改變會影響格子大小
+  }
+  $('fontbar').addEventListener('click', (e) => {
+    const f = e.target.closest('button[data-font]')?.dataset.font;
+    if (f) applyFont(f);
+  });
+  try { applyFont(localStorage.getItem(FONT_KEY) || 'hei'); } catch (_) { applyFont('hei'); }
+
+  /* ===== 財運／財庫分析（移植自 LucaChiu/ziwei 的計分規則）===== */
+  const LAYER_TITLE = { birth: '本命', dec: '大限', yr: '流年' };
+  const ANA_SHA = ['擎羊', '陀羅', '火星', '鈴星'];
   const PALACE_MEAN = {
     命宮: '自己的能力與主動', 兄弟: '兄弟、合夥人、同儕', 夫妻: '配偶、感情對象', 子女: '子女、合夥投資、晚輩',
     財帛: '本業收入與理財', 疾厄: '身體、勞力付出', 遷移: '外地、出外發展、外部環境', 僕役: '朋友、人脈、客戶、部屬', 交友: '朋友、人脈、客戶、部屬',
@@ -756,25 +975,23 @@
   const TANLANG_LU = 50; // 貪狼化祿特例分數
   const BASE = 0;        // 基準分數
 
-  // kind：wealth（財帛）/ vault（田宅）；upto：算到哪一層（birth / dec / year）
+  // kind：wealth（財帛）／vault（田宅）；upto：算到哪一層（birth／dec／yr）
   function analyze(kind, upto) {
-    const { astro: a, h, sel } = state;
+    const H = curH;
     const cfg = ANA[kind];
-    // 計分層：生年一定算；大限、流年依按下的按鈕層級加入（流月不計分）
-    const layers = [{ key: 'birth', title: '生年', mut: SIHUA[a.chineseDate[0]] || [] }];
-    if (h && sel.dec != null && (upto === 'dec' || upto === 'year')) layers.push({ key: 'dec', title: '大限', mut: h.decadal.mutagen, stars: h.decadal.stars, lucun: '運祿', names: h.decadal.palaceNames });
-    if (h && sel.year != null && upto === 'year') layers.push({ key: 'year', title: '流年', mut: h.yearly.mutagen, stars: h.yearly.stars, lucun: '流祿', names: h.yearly.palaceNames });
+    const layers = [{ key: 'birth', title: '生年', mut: SIHUA[A.chineseDate[0]] || [] }];
+    if (show.dec && (upto === 'dec' || upto === 'yr')) layers.push({ key: 'dec', title: '大限', mut: H.decadal.mutagen, stars: H.decadal.stars, lucun: '運祿', names: H.decadal.palaceNames });
+    if (show.yr && upto === 'yr') layers.push({ key: 'yr', title: '流年', mut: H.yearly.mutagen, stars: H.yearly.stars, lucun: '流祿', names: H.yearly.palaceNames });
     const top = layers[layers.length - 1];
-    const topNames = top.names || a.palaces.map((p) => p.name);
+    const topNames = top.names || A.palaces.map((p) => p.name);
     const f = topNames.indexOf(cfg.target);
     const tri = [f, (f + 4) % 12, (f + 8) % 12, (f + 6) % 12];
     const ROLE = ['本宮', '三合', '三合', '對宮'];
 
-    // 宮位描述：地支 + 各層宮名
     const pname = (j) => {
-      const parts = [`本命${a.palaces[j].name}`];
+      const parts = [`本命${A.palaces[j].name}`];
       layers.forEach((L) => { if (L.names) parts.push(`${L.title}${L.names[j]}`); });
-      return `${a.palaces[j].earthlyBranch}宮（${parts.join('／')}）`;
+      return `${A.palaces[j].earthlyBranch}宮（${parts.join('／')}）`;
     };
     const meanOf = (j) => {
       const nm = topNames[j];
@@ -782,28 +999,23 @@
     };
     const starsOf = (p) => [...p.majorStars, ...p.minorStars, ...p.adjectiveStars];
 
-    const items = [];   // 計分項目 { pts, label, where, kind, via, from }
-    const softs = [];   // 權、科（不計分，只寫入解讀）
-    const sha = [];
+    const items = [], softs = [], sha = [];
     let kong = false, jie = false;
-
     const scan = (stars, j, factor, via, from) => {
       stars.forEach((s) => layers.forEach((L) => {
         const k = L.mut.indexOf(s.name);
         if (k < 0) return;
-        const viaTxt = via === 'borrow' ? `（借${a.palaces[from].name}，折半）` : via === 'jia' ? `（天相夾，來自${pname(from)}）` : '';
-        const label = `${s.name}${L.title}化${MUT[k]}`;
+        const viaTxt = via === 'borrow' ? `（借${A.palaces[from].name}，折半）` : via === 'jia' ? `（天相夾，來自${pname(from)}）` : '';
+        const label = `${s.name}${L.title}化${MG[k]}`;
         if (k === 0) items.push({ pts: (s.name === '貪狼' ? TANLANG_LU : 5) * factor, label: label + (s.name === '貪狼' ? '（特例）' : ''), where: pname(j) + viaTxt, kind: 'lu', star: s.name, via, from, j });
         else if (k === 3) items.push({ pts: -5 * factor, label, where: pname(j) + viaTxt, kind: 'ji', star: s.name, via, from, j });
         else if (via !== 'jia') softs.push({ label, star: s.name, k, j });
       }));
     };
-
-    tri.forEach((j) => {
-      const p = a.palaces[j];
+    if (f >= 0) tri.forEach((j) => {
+      const p = A.palaces[j];
       const own = starsOf(p);
       scan(own, j, 1, 'own');
-      // 祿存：本命 + 大限 / 流年祿存
       if (own.some((s) => s.name === '祿存')) items.push({ pts: 3, label: '祿存', where: pname(j), kind: 'lucun', via: 'own', j });
       layers.forEach((L) => {
         if (L.stars && (L.stars[j] || []).some((s) => s.name === L.lucun)) items.push({ pts: 3, label: `${L.title}祿存`, where: pname(j), kind: 'lucun', via: 'own', j });
@@ -811,42 +1023,31 @@
       own.forEach((s) => {
         if (s.name === '地空') kong = true;
         if (s.name === '地劫') jie = true;
-        if (SHA.includes(s.name)) sha.push(`${s.name}在${pname(j)}`);
+        if (ANA_SHA.includes(s.name)) sha.push(`${s.name}在${pname(j)}`);
       });
-      // 空宮借對宮主星，四化分數折半（對宮也在三方四正時，對宮全額 + 借入折半都要算）
       if (!p.majorStars.length) {
         const oj = (j + 6) % 12;
-        if (a.palaces[oj].majorStars.length) scan(a.palaces[oj].majorStars, j, 0.5, 'borrow', oj);
+        if (A.palaces[oj].majorStars.length) scan(A.palaces[oj].majorStars, j, 0.5, 'borrow', oj);
       }
-      // 天相吸左右鄰宮的祿、忌
       if (p.majorStars.some((s) => s.name === '天相')) {
-        [(j + 11) % 12, (j + 1) % 12].forEach((n) => scan([...a.palaces[n].majorStars, ...a.palaces[n].minorStars], j, 1, 'jia', n));
+        [(j + 11) % 12, (j + 1) % 12].forEach((n) => scan([...A.palaces[n].majorStars, ...A.palaces[n].minorStars], j, 1, 'jia', n));
       }
     });
 
     const raw = BASE + items.reduce((t, x) => t + x.pts, 0);
-    const kj = kong || jie;
-    const score = kj ? (raw > 0 ? raw * 0.3 : raw < 0 ? raw * 1.7 : 0) : raw;
-
-    // 雙忌警示（財帛：金流吃緊／田宅：財庫漏財）
+    const score = (kong || jie) ? (raw > 0 ? raw * 0.3 : raw < 0 ? raw * 1.7 : 0) : raw;
     const big = [];
-    // 地空 + 地劫：標示「特別留意」
     const care = kong && jie ? ['三方四正同時有地空、地劫'] : [];
-    // 化忌數（雙忌判斷）：三方四正內 + 借進來的忌；同一顆星同一層的忌只算一個
     const jiCount = new Set(items.filter((x) => x.kind === 'ji' && x.via !== 'jia').map((x) => x.label)).size;
     if (layers.some((L) => L.key === 'dec') && jiCount >= 2) big.push(`大限層級，三方四正有 ${jiCount} 個化忌`);
-
     return { kind, layerKey: upto, cfg, layers, top, f, tri, ROLE, pname, meanOf, items, softs, sha, kong, jie, raw, score, big, care, jiCount };
   }
 
-  // 評語分級；tone：good / mid / bad（綜合解讀用）
   function rateOf(r) {
-    // 雙忌：財帛（金流）＝金流吃緊；田宅（財庫，累積的家底）＝財庫漏財
     const bigName = r.kind === 'vault' ? '財庫漏財' : '金流吃緊';
     const s = r.score;
     if (r.big.length) return { rating: bigName, rcls: 'r-bad', tone: 'bad', bigName };
     if (r.care.length) return { rating: '特別留意', rcls: 'r-weak', tone: 'bad', bigName };
-    // 基準 0：負分破財；之後依總分分級（一個化祿 = 5）
     if (s < 0) return { rating: '破財', rcls: 'r-bad', tone: 'bad', bigName };
     if (s < 3) return { rating: '偏弱', rcls: 'r-weak', tone: 'mid', bigName };
     if (s < 8) return { rating: '平穩', rcls: 'r-mid', tone: 'mid', bigName };
@@ -854,65 +1055,48 @@
     return { rating: '旺', rcls: 'r-best', tone: 'good', bigName };
   }
 
-  // 分析的期間標籤：2027 年（丁未）／大限 32~41 歲（戊子）／本命
   function periodOf(layer) {
-    const { sel, astro: a } = state;
-    if (layer === 'year' && sel.year != null) return `${sel.year} 年（${yearGZ(sel.year)}）`;
-    if (layer === 'dec' && sel.dec != null) {
-      const p = a.palaces[sel.dec];
+    if (layer === 'yr' && show.yr) return `${state.year} 年（${yearGZ(state.year)}）`;
+    if (layer === 'dec' && show.dec) {
+      const p = A.palaces[curH.decadal.index];
       return `大限 ${p.decadal.range[0]}~${p.decadal.range[1]} 歲（${p.heavenlyStem}${p.earthlyBranch}）`;
     }
     return '本命';
   }
 
-  // 財運 + 財庫綜合解讀
   function comboHTML(r, o) {
     const w = r.kind === 'wealth' ? r : o, v = r.kind === 'vault' ? r : o;
     const wr = rateOf(w), vr = rateOf(v);
-    // 列出某一邊的化忌來源：哪顆星、落在哪個領域
     const jiCauses = (x) => x.items.filter((i) => i.kind === 'ji').map((i) => {
       const j = i.via === 'jia' ? i.from : i.j;
       return `${esc(i.label)}在${esc(x.meanOf(j))}${STAR_MEAN[i.star] ? `（${esc(STAR_MEAN[i.star])}）` : ''}`;
     });
-    const luSrc = (x) => x.items.filter((i) => i.kind === 'lu').map((i) => {
-      const j = i.via === 'jia' ? i.from : i.j;
-      return `${esc(i.label)}（${esc(x.meanOf(j))}）`;
-    });
+    const luSrc = (x) => x.items.filter((i) => i.kind === 'lu').map((i) => `${esc(i.label)}（${esc(x.meanOf(i.via === 'jia' ? i.from : i.j))}）`);
     const head = `財運 ${w.score > 0 ? '+' : ''}${fmt(w.score)}（${wr.rating}）、財庫 ${v.score > 0 ? '+' : ''}${fmt(v.score)}（${vr.rating}）`;
     let body;
-    if (wr.tone === 'good' && vr.tone === 'bad') {
-      body = '賺得到錢，但要留意累積下來的資產被消耗掉，例如為了家裡或房子花大錢，或者動用到長期存下來的部位。';
-    } else if (wr.tone === 'bad' && vr.tone === 'good') {
-      body = '金流偏緊，但家底還在。短期周轉可能要動到存款，重點是別讓「暫時借用老本」變成長期吃老本。';
-    } else if (wr.tone === 'good' && vr.tone === 'good') {
-      body = '進得來也存得住，是累積資產的好時機，可以把賺到的錢有計畫地轉成長期資產。';
-    } else if (wr.tone === 'bad' && vr.tone === 'bad') {
-      body = '金流和家底都有壓力，以守為主：控制支出、不動老本、避免借貸與作保。';
-    } else if (wr.tone === 'good') {
-      body = '賺錢的條件不錯，財庫普通。賺到的錢要主動存下來，不然容易留不住。';
-    } else if (vr.tone === 'good') {
-      body = '進帳普通，但家底穩。適合守成、慢慢累積，不必急著開源。';
-    } else {
-      body = '財運、財庫都在平穩區間，沒有明顯的大起大落，穩健操作即可。';
-    }
+    if (wr.tone === 'good' && vr.tone === 'bad') body = '賺得到錢，但要留意累積下來的資產被消耗掉，例如為了家裡或房子花大錢，或者動用到長期存下來的部位。';
+    else if (wr.tone === 'bad' && vr.tone === 'good') body = '金流偏緊，但家底還在。短期周轉可能要動到存款，重點是別讓「暫時借用老本」變成長期吃老本。';
+    else if (wr.tone === 'good' && vr.tone === 'good') body = '進得來也存得住，是累積資產的好時機，可以把賺到的錢有計畫地轉成長期資產。';
+    else if (wr.tone === 'bad' && vr.tone === 'bad') body = '金流和家底都有壓力，以守為主：控制支出、不動老本、避免借貸與作保。';
+    else if (wr.tone === 'good') body = '賺錢的條件不錯，財庫普通。賺到的錢要主動存下來，不然容易留不住。';
+    else if (vr.tone === 'good') body = '進帳普通，但家底穩。適合守成、慢慢累積，不必急著開源。';
+    else body = '財運、財庫都在平穩區間，沒有明顯的大起大落，穩健操作即可。';
     const extra = [];
-    if (wr.tone === 'good' && luSrc(w).length) extra.push(`錢的來源：${luSrc(w).join('、')}`);
-    if (vr.tone === 'bad' && jiCauses(v).length) extra.push(`家底被消耗的原因：${jiCauses(v).join('；')}`);
-    if (wr.tone === 'bad' && jiCauses(w).length) extra.push(`金流卡住的原因：${jiCauses(w).join('；')}`);
+    if (wr.tone === 'good' && luSrc(w).length) extra.push(['錢的來源', luSrc(w)]);
+    if (vr.tone === 'bad' && jiCauses(v).length) extra.push(['家底被消耗的原因', jiCauses(v)]);
+    if (wr.tone === 'bad' && jiCauses(w).length) extra.push(['金流卡住的原因', jiCauses(w)]);
+    const chip = (t, x) => `<span class="chip ${x.rcls}">${t} ${x.s > 0 ? '+' : ''}${fmt(x.s)}・${x.rating}</span>`;
     return `<div class="ana-combo"><h4>${esc(periodOf(r.layerKey))} 財運＋財庫綜合解讀</h4>
-      <p>${head}。${body}</p>${extra.map((t) => `<p>${t}。</p>`).join('')}</div>`;
+      <div class="chips">${chip('財運', { ...wr, s: w.score })}${chip('財庫', { ...vr, s: v.score })}</div>
+      <p>${body}</p>
+      ${extra.map(([t, list]) => `<h5>${t}</h5><ul>${list.map((x) => `<li>${x}</li>`).join('')}</ul>`).join('')}</div>`;
   }
 
-  /* ===== 分面向解讀：工作、股市、房產，輔以貴人與破財可能性 ===== */
   const GUIREN = ['天魁', '天鉞', '左輔', '右弼'];
-  // 貴人星代表的人
   const GUI_WHO = {
-    天魁: '年長男性、上司或長輩型的貴人，明面上提拔你',
-    天鉞: '女性或異性貴人，常在背後默默幫忙',
-    左輔: '同輩的男性助力，例如同事、平輩朋友，實際出力幫忙',
-    右弼: '同輩的女性助力或幕後協調者，幫你牽線、打圓場',
+    天魁: '年長男性、上司或長輩型的貴人，明面上提拔你', 天鉞: '女性或異性貴人，常在背後默默幫忙',
+    左輔: '同輩的男性助力，例如同事、平輩朋友，實際出力幫忙', 右弼: '同輩的女性助力或幕後協調者，幫你牽線、打圓場',
   };
-  // 化科星代表的人
   const KE_WHO = {
     文昌: '老師、學者或文書專業人士（會計、律師、代書）', 文曲: '口才好、有才藝的人，或文書、教育相關人士',
     太陰: '女性貴人（母親、姊妹、女性長官）', 太陽: '男性貴人（父親、兄長、男性長官）',
@@ -920,7 +1104,6 @@
     天梁: '長輩、公家機關或醫療、保險相關人士', 武曲: '金融、財務專業人士',
     右弼: '同輩女性或幕後協調者', 左輔: '同輩男性或同事', 天府: '穩重、有資源的長輩',
   };
-  // 宮位代表的對象
   const PALACE_WHO = {
     命宮: '你主動結識，或憑自身條件吸引來的人', 兄弟: '兄弟姊妹、合夥人、同事同儕', 夫妻: '配偶、伴侶或另一半的人脈',
     子女: '子女、晚輩、學生或合夥投資的對象', 財帛: '客戶、金主，或在錢的事情上出手的人', 疾厄: '醫生、照護你的人，或在你辛苦勞累時出現的人',
@@ -928,29 +1111,27 @@
     官祿: '上司、主管或工作上的合作對象', 事業: '上司、主管或工作上的合作對象', 田宅: '家人、房東、鄰居或房仲',
     福德: '興趣圈的朋友、精神上的導師或祖輩', 父母: '父母、上司、長官、老師或公家機關',
   };
-  // 掃描某宮的訊號（本宮星 + 空宮借對宮主星）
   function sigOf(r, j) {
-    const a = state.astro, p = a.palaces[j];
+    const p = A.palaces[j];
     const out = { lu: [], quan: [], ke: [], ji: [], kong: false, jie: false, sha: [], gui: [], lucun: false, majors: p.majorStars.map((s) => s.name) };
     const scanStars = (stars, borrowed) => stars.forEach((s) => r.layers.forEach((L) => {
       const k = L.mut.indexOf(s.name);
       if (k < 0) return;
-      const t = `${s.name}${L.title}化${MUT[k]}${borrowed ? '（借）' : ''}`;
-      [out.lu, out.quan, out.ke, out.ji][k].push(t);
+      [out.lu, out.quan, out.ke, out.ji][k].push(`${s.name}${L.title}化${MG[k]}${borrowed ? '（借）' : ''}`);
     }));
     const own = [...p.majorStars, ...p.minorStars, ...p.adjectiveStars];
     scanStars(own, false);
-    if (!p.majorStars.length) scanStars(a.palaces[(j + 6) % 12].majorStars, true);
+    if (!p.majorStars.length) scanStars(A.palaces[(j + 6) % 12].majorStars, true);
     own.forEach((s) => {
       if (s.name === '地空') out.kong = true;
       if (s.name === '地劫') out.jie = true;
       if (s.name === '祿存') out.lucun = true;
-      if (SHA.includes(s.name)) out.sha.push(s.name);
+      if (ANA_SHA.includes(s.name)) out.sha.push(s.name);
       if (GUIREN.includes(s.name)) out.gui.push(s.name);
     });
     return out;
   }
-  const namesOf = (r) => r.top.names || state.astro.palaces.map((p) => p.name);
+  const namesOf = (r) => r.top.names || A.palaces.map((p) => p.name);
   const idxOf = (r, nm) => namesOf(r).indexOf(nm);
 
   function domainsHTML(r, o) {
@@ -959,7 +1140,7 @@
     const L = (arr) => arr.map(esc).join('、');
     const sec = [];
 
-    // --- 工作：官祿宮（在財帛三方內，主收入來源） ---
+    // 工作：官祿宮
     const gj = idxOf(w, '官祿') >= 0 ? idxOf(w, '官祿') : idxOf(w, '事業');
     if (gj >= 0) {
       const g = sigOf(w, gj), t = [];
@@ -972,8 +1153,7 @@
       if (!t.length) t.push('官祿宮沒有明顯四化，工作偏平穩，收入以現狀為主');
       sec.push(['工作', esc(w.meanOf(gj)), t]);
     }
-
-    // --- 股市：看財帛（金流、可操作資金）+ 福德（投機心態） ---
+    // 股市：財帛＋福德
     {
       const t = [];
       const kj = w.kong || w.jie;
@@ -993,8 +1173,7 @@
       }
       sec.push(['股市', '財帛＋福德', t]);
     }
-
-    // --- 房產：田宅本宮為主，搭配同期財運看付款能力 ---
+    // 房產：田宅
     {
       const tj = v.f, td = sigOf(v, tj), t = [];
       if (td.ji.length) t.push(`${L(td.ji)}坐田宅：房產容易有合約、產權、修繕或家庭方面的糾紛，不宜急著置產；要買就仔細查合約與產權`);
@@ -1004,21 +1183,20 @@
       else t.push('田宅本宮沒有祿忌，條件中性，以實際財務狀況為準');
       if (td.lucun) t.push('祿存坐田宅：守得住、適合長期持有');
       if (td.kong || td.jie) t.push('地空或地劫坐田宅：房產容易虛耗、縮水，避免投機性買房');
-      if (td.majors.some((n) => ['天府', '太陰', '武曲'].includes(n))) t.push(`${L(td.majors.filter((n) => ['天府', '太陰', '武曲'].includes(n)))}坐田宅：庫星或財星，利守成置產`);
+      const ku = td.majors.filter((n) => ['天府', '太陰', '武曲'].includes(n));
+      if (ku.length) t.push(`${L(ku)}坐田宅：庫星或財星，利守成置產`);
       if (td.majors.some((n) => ['破軍', '七殺'].includes(n))) t.push('破軍或七殺坐田宅：房產容易變動、換屋');
       if (wt === 'bad') t.push('同期財運有壓力，房貸月付要保守估算、留足周轉金');
       else if (wt === 'good') t.push('同期財運有支撐，付款能力較好');
       sec.push(['房產', esc(v.meanOf(tj)), t]);
     }
-
-    // --- 貴人：化科、貴人星、天相吸來的祿 ---
+    // 貴人：化科、貴人星、天相吸來的祿
     {
       const t = [], seen = new Set();
       [w, v].forEach((x) => x.tri.forEach((j) => {
-        const s = sigOf(x, j), key = `${j}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        // 對象 = 星的性質（男 / 女 / 長輩 / 同輩…）＋ 宮位的人（上司 / 父母 / 朋友…）
+        if (seen.has(j)) return;
+        seen.add(j);
+        const s = sigOf(x, j);
         const nm = namesOf(x)[j], where = PALACE_WHO[nm] || nm;
         const tag = `（${x.top.names ? x.top.title : '本命'}${nm}）`;
         s.gui.forEach((g) => t.push(`<b>${esc(g)}</b>${esc(tag)}：${esc(GUI_WHO[g])}；對象多半是${esc(where)}`));
@@ -1033,11 +1211,9 @@
       }));
       sec.push(['貴人', '財帛＋田宅三方四正', t.length ? t : ['三方四正貴人星不明顯，凡事靠自己比較穩']]);
     }
-
-    // --- 破財可能性：化忌來源、空劫、煞星、雙忌 ---
+    // 破財可能性
     {
       const t = [], jiSet = new Set();
-      // 先列直接落在三方四正的忌，再列天相吸來的忌（同一顆忌只寫一次）
       const allJi = [w, v].flatMap((x) => x.items.filter((i) => i.kind === 'ji').map((i) => [x, i]))
         .sort((p, q) => (p[1].via === 'jia') - (q[1].via === 'jia'));
       allJi.forEach(([x, i]) => {
@@ -1056,151 +1232,205 @@
       const level = risk >= 5 ? '高' : risk >= 3 ? '中' : '低';
       sec.push([`破財可能性：${level}`, '化忌、空劫、煞星', t.length ? t : ['三方四正沒有化忌與空劫，破財機會低']]);
     }
-
     return `<div class="ana-domains"><h4>${esc(periodOf(r.layerKey))} 整體分面向解讀<small>（財運＋財庫合併判斷，不分按的是哪一顆）</small></h4>
-      ${sec.map(([h, sub, t]) => `<div class="dom"><div class="dom-h">${esc(h)}<small>${sub}</small></div><ul>${t.map((x) => `<li>${x}</li>`).join('')}</ul></div>`).join('')}
+      ${sec.map(([h, sub, t]) => `<div class="dom"><div class="dom-h">${esc(h)}<small>${sub}</small></div><ul>${t.map((x) => {
+        // 「星曜：說明；對象…」拆成 重點 + 說明，第二句換行
+        const m = x.match(/^(.*?)：(.*)$/);
+        const body = (m ? m[2] : x).replace(/；/g, '<br>');
+        return `<li>${m ? `<b class="k">${m[1].replace(/<\/?b>/g, '')}</b>` : ''}<span class="v">${body}</span></li>`;
+      }).join('')}</ul></div>`).join('')}
     </div>`;
   }
 
   function anaHTML(r, other) {
     const { cfg, top, f, tri, ROLE, pname, meanOf, items, softs, sha, kong, jie, raw, score, big, care } = r;
-    const a = state.astro;
     const { rating, rcls, bigName } = rateOf(r);
     const period = periodOf(r.layerKey);
-
     const topTitle = top.key === 'birth' ? '本命' : top.title;
-    const P = [];
-    const fp = a.palaces[f];
-    // 1. 位置
-    P.push(`<b>位置</b>：${topTitle}${cfg.target}落在 ${esc(pname(f))}。${esc(cfg.title)}${esc(cfg.role)}；這一層的${esc(cfg.target)}跟 ${esc(PALACE_MEAN[fp.name] || fp.name)}（本命${esc(fp.name)}）關係較大。`);
-    // 2. 主星
-    const mainStars = fp.majorStars.length ? fp.majorStars : a.palaces[(f + 6) % 12].majorStars;
-    if (mainStars.length) {
-      const tag = fp.majorStars.length ? '' : `（空宮，借對宮${esc(a.palaces[(f + 6) % 12].name)}）`;
-      P.push(`<b>主星</b>${tag}：${mainStars.map((s) => `${esc(s.name)}＝${esc(STAR_MEAN[s.name] || '')}`).join('；')}。`);
-    } else P.push('<b>主星</b>：本宮與對宮都沒有主星，財的性質看三合宮與運限四化。');
-    // 3. 有利
+    // 每個段落 = { t: 標題, cls: 色系, items: [{ k: 粗體重點, v: 說明 }] }
+    const S = [];
+    const it = (k, v) => ({ k, v });
+    const roleTxt = (x) => `${ROLE[tri.indexOf(x.j)]}${x.via === 'borrow' ? '・借星' : ''}`;
+    const fp = A.palaces[f];
+    S.push({ t: '位置', cls: 'info', items: [
+      it(`${topTitle}${cfg.target} → ${fp.earthlyBranch}宮`, esc(pname(f).replace(/^.宮/, ''))),
+      it(`${cfg.title}`, `${esc(cfg.role)}；這一層跟「${esc(PALACE_MEAN[fp.name] || fp.name)}」（本命${esc(fp.name)}）關係較大`),
+    ] });
+    const mainStars = fp.majorStars.length ? fp.majorStars : A.palaces[(f + 6) % 12].majorStars;
+    S.push({ t: fp.majorStars.length ? '主星' : `主星（空宮，借對宮${A.palaces[(f + 6) % 12].name}）`, cls: 'info',
+      items: mainStars.length
+        ? mainStars.map((s) => it(s.name, esc(STAR_MEAN[s.name] || '')))
+        : [it('', '本宮與對宮都沒有主星，財的性質看三合宮與運限四化')] });
     const good = [];
-    items.filter((x) => x.kind === 'lu' && x.via !== 'jia').forEach((x) => good.push(`${esc(x.label)}（${esc(ROLE[tri.indexOf(x.j)])}${x.via === 'borrow' ? '・借星' : ''}）：${esc(STAR_MEAN[x.star] || '')}帶財`));
-    items.filter((x) => x.kind === 'lucun').forEach((x) => good.push(`${esc(x.label)}（${esc(ROLE[tri.indexOf(x.j)])}）：財源有底，性質保守守財`));
-    softs.forEach((x) => good.push(`${esc(x.label)}（${esc(ROLE[tri.indexOf(x.j)])}）：${x.k === 1 ? '有掌控力、主動爭取' : '名聲、文書、貴人帶財'}`));
-    P.push(`<b>有利</b>：${good.length ? good.join('；') : '三方四正沒有祿、權、科，財來得比較辛苦'}。`);
-    // 4. 不利
+    items.filter((x) => x.kind === 'lu' && x.via !== 'jia').forEach((x) => good.push(it(`${x.label}`, `<span class="role-tag">${esc(roleTxt(x))}</span>${esc(STAR_MEAN[x.star] || '')}帶財`)));
+    items.filter((x) => x.kind === 'lucun').forEach((x) => good.push(it(x.label, `<span class="role-tag">${esc(roleTxt(x))}</span>財源有底，性質保守守財`)));
+    softs.forEach((x) => good.push(it(x.label, `<span class="role-tag">${esc(ROLE[tri.indexOf(x.j)])}</span>${x.k === 1 ? '有掌控力、主動爭取' : '名聲、文書、貴人帶財'}`)));
+    S.push({ t: '有利', cls: 'good', items: good.length ? good : [it('', '三方四正沒有祿、權、科，財來得比較辛苦')] });
     const bad = [];
-    items.filter((x) => x.kind === 'ji' && x.via !== 'jia').forEach((x) => bad.push(`${esc(x.label)}（${esc(ROLE[tri.indexOf(x.j)])}${x.via === 'borrow' ? '・借星' : ''}）：${esc(STAR_MEAN[x.star] || '')}方面容易出問題`));
-    if (kong) bad.push('地空：想法落空、錢財虛耗');
-    if (jie) bad.push('地劫：突發破耗、錢財被劫');
-    sha.forEach((s) => bad.push(esc(s)));
-    P.push(`<b>不利</b>：${bad.length ? bad.join('；') : '三方四正沒有化忌與煞星，相對乾淨'}。`);
-    // 5. 天相夾
+    items.filter((x) => x.kind === 'ji' && x.via !== 'jia').forEach((x) => bad.push(it(x.label, `<span class="role-tag">${esc(roleTxt(x))}</span>${esc(STAR_MEAN[x.star] || '')}方面容易出問題`)));
+    if (kong) bad.push(it('地空', '想法落空、錢財虛耗'));
+    if (jie) bad.push(it('地劫', '突發破耗、錢財被劫'));
+    sha.forEach((s) => { const [nm, at] = s.split('在'); bad.push(it(nm, esc('在' + at))); });
+    S.push({ t: '不利', cls: 'bad', items: bad.length ? bad : [it('', '三方四正沒有化忌與煞星，相對乾淨')] });
     const jl = items.filter((x) => x.via === 'jia');
     if (jl.length) {
-      const lines = jl.map((x) => x.kind === 'lu'
-        ? `${esc(x.label)} → 錢從「${esc(meanOf(x.from))}」來`
-        : `${esc(x.label)} → 「${esc(meanOf(x.from))}」容易害你破財`);
-      P.push(`<b>天相夾</b>：${lines.join('；')}。`);
+      S.push({ t: '天相夾', cls: 'info', items: jl.map((x) => x.kind === 'lu'
+        ? it(x.label, `錢從「${esc(meanOf(x.from))}」來`)
+        : it(x.label, `「${esc(meanOf(x.from))}」容易害你破財`)) });
     }
-    // 6. 總結
     const SUM = {
-      '財庫漏財': `${big.map(esc).join('、')}，財庫（存款、不動產、長期累積的資產）像有破洞，家底容易被消耗或縮水，累積比較辛苦。重點在守住已經存下來的部分，避免動用老本、為家庭或房產的事大額支出。`,
-      '金流吃緊': `${big.map(esc).join('、')}，不一定是大賠，比較像現金流被卡住：支出、周轉壓力集中，手上可操作的資金很緊。避免高槓桿、借貸與作保，大額支出盡量分散時間點。`,
-      '特別留意': `三方四正同時有地空、地劫，錢財容易虛耗或突發破耗，帳面上的好處要打折看。避免投機、衝動投資與借貸作保。`,
-      '破財': '扣分大於加分，支出與破耗的壓力大於進帳，宜保守理財、控制開銷。',
-      '偏弱': '有進帳但力道不足，適合穩定累積，不適合冒進。',
-      '平穩': '有底但不算旺，穩健操作即可，留意不利項目提到的風險。',
-      '良好': '財的條件不錯，可以積極爭取，但仍要避開不利項目的地雷。',
-      '旺': '財的條件很旺，是可以主動出擊的時候。',
+      財庫漏財: `${big.map(esc).join('、')}，財庫（存款、不動產、長期累積的資產）像有破洞，家底容易被消耗或縮水，累積比較辛苦。重點在守住已經存下來的部分，避免動用老本、為家庭或房產的事大額支出。`,
+      金流吃緊: `${big.map(esc).join('、')}，不一定是大賠，比較像現金流被卡住：支出、周轉壓力集中，手上可操作的資金很緊。避免高槓桿、借貸與作保，大額支出盡量分散時間點。`,
+      特別留意: '三方四正同時有地空、地劫，錢財容易虛耗或突發破耗，帳面上的好處要打折看。避免投機、衝動投資與借貸作保。',
+      破財: '扣分大於加分，支出與破耗的壓力大於進帳，宜保守理財、控制開銷。',
+      偏弱: '有進帳但力道不足，適合穩定累積，不適合冒進。',
+      平穩: '有底但不算旺，穩健操作即可，留意不利項目提到的風險。',
+      良好: '財的條件不錯，可以積極爭取，但仍要避開不利項目的地雷。',
+      旺: '財的條件很旺，是可以主動出擊的時候。',
     };
-    P.push(`<b>總結</b>：${SUM[rating]}${(kong || jie) ? ' 有地空或地劫，分數已經過修正，帳面看起來的好處容易打折。' : ''}`);
+    const summary = `${SUM[rating]}${(kong || jie) ? '有地空或地劫，分數已經過修正，帳面看起來的好處容易打折。' : ''}`;
+    const secHTML = S.map((s) => `<div class="ana-sec ${s.cls}"><h5>${esc(s.t)}</h5><ul>${s.items.map((x) =>
+      `<li>${x.k ? `<b>${esc(x.k)}</b>` : ''}${x.k && x.v ? '<span class="sep">｜</span>' : ''}${x.v}</li>`).join('')}</ul></div>`).join('');
 
-    const rows = (BASE ? [`<tr><td>基準</td><td></td><td class="pos">+${BASE}</td></tr>`] : [])
-      .concat(items.map((x) => `<tr><td>${esc(x.label)}</td><td>${esc(x.where)}</td><td class="${x.pts >= 0 ? 'pos' : 'neg'}">${x.pts >= 0 ? '+' : ''}${fmt(x.pts)}</td></tr>`));
-    rows.push(`<tr class="sub"><td>小計</td><td></td><td>${fmt(raw)}</td></tr>`);
-    if (kong || jie) rows.push(`<tr><td>${kong && jie ? '地空＋地劫' : kong ? '地空' : '地劫'}修正</td><td>${raw > 0 ? '分數 > 0 時 × 0.3' : raw < 0 ? '分數 < 0 時 × 1.7' : '分數為 0，不變'}</td><td>${fmt(score)}</td></tr>`);
-    if (!items.length) rows.push(`<tr><td colspan="3">三方四正沒有祿、忌、祿存</td></tr>`);
-    rows.push(`<tr class="sub"><td>總分</td><td></td><td>${fmt(score)}</td></tr>`);
-    return `<section class="ana" aria-label="${esc(period)}${esc(cfg.title)}分析">
-      <div class="ana-head">
+    // 計分表：兩欄（項目＋位置小字｜分數），手機上不會擠
+    const row = (label, sub, pts, cls = '') => `<tr class="${cls}"><td><div>${esc(label)}</div>${sub ? `<small>${esc(sub)}</small>` : ''}</td><td class="${typeof pts === 'number' ? (pts >= 0 ? 'pos' : 'neg') : ''}">${typeof pts === 'number' ? (pts > 0 ? '+' : '') + fmt(pts) : pts}</td></tr>`;
+    const rows = items.map((x) => row(x.label, x.where, x.pts));
+    if (!items.length) rows.push('<tr><td colspan="2">三方四正沒有祿、忌、祿存</td></tr>');
+    rows.push(row('小計', '', fmt(raw), 'sub'));
+    if (kong || jie) rows.push(row(`${kong && jie ? '地空＋地劫' : kong ? '地空' : '地劫'}修正`, raw > 0 ? '分數 > 0 時 × 0.3' : raw < 0 ? '分數 < 0 時 × 1.7' : '分數為 0，不變', fmt(score)));
+    rows.push(row('總分', '', fmt(score), 'sub'));
+    return `<div class="ana-head">
         <h3>${esc(period)} ${esc(cfg.title)}分析・${esc(topTitle)}${esc(cfg.target)}</h3>
-        <div class="ana-score ${rcls}" aria-label="${esc(cfg.title)}總分"><span>${score > 0 ? '+' : ''}${fmt(score)}</span><small> 分</small></div>
+        <div class="ana-score ${rcls}"><span>${score > 0 ? '+' : ''}${fmt(score)}</span><small> 分</small></div>
         <span class="ana-rating ${rcls}">${rating}</span>
+        <button type="button" class="linkbtn" id="anaClose">關閉分析</button>
       </div>
       ${big.map((b) => `<div class="ana-warn" role="alert">⚠ ${bigName}：${esc(b)}</div>`).join('')}
       ${care.map((b) => `<div class="ana-warn care" role="alert">⚠ 特別留意：${esc(b)}</div>`).join('')}
+      <div class="ana-summary ${rcls}"><b>總結</b>${esc(summary)}</div>
       <div class="ana-body">
-        <div class="ana-text">${P.map((t) => `<p>${t}</p>`).join('')}</div>
-        <table class="ana-table"><thead><tr><th>項目</th><th>位置</th><th>分數</th></tr></thead><tbody>${rows.join('')}</tbody></table>
+        <div class="ana-text">${secHTML}</div>
+        <div><h5 class="ana-th">計分明細</h5>
+        <table class="ana-table"><thead><tr><th>項目／位置</th><th>分數</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
       </div>
-      ${other ? comboHTML(r, other) : ''}
-      ${other ? domainsHTML(r, other) : ''}
-      <p class="ana-note">計分：基準 ${BASE}；化祿 +5（貪狼化祿 +${TANLANG_LU}）、化忌 −5、祿存 +3；空宮借對宮折半；天相吸左右鄰宮的祿忌；有地空或地劫時，分數 &gt; 0 × 0.3、&lt; 0 × 1.7。
-        計分層：${r.layers.map((L) => L.title).join('、')}。流月不計分。權、科只寫入解讀，不計分。
-        評語：&lt; 0 破財、0~3 偏弱、3~8 平穩、8~15 良好、15 以上旺。</p>
-    </section>`;
+      ${other ? comboHTML(r, other) + domainsHTML(r, other) : ''}
+      <details class="ana-note"><summary>計分規則</summary><ul>
+        <li>基準 ${BASE}；化祿 +5（貪狼化祿 +${TANLANG_LU}）、化忌 −5、祿存 +3</li>
+        <li>空宮借對宮主星折半；天相吸左右鄰宮的祿忌</li>
+        <li>有地空或地劫時：分數 &gt; 0 × 0.3、&lt; 0 × 1.7</li>
+        <li>計分層：${r.layers.map((x) => x.title).join('、')}。流月不計分；權、科只寫入解讀、不計分</li>
+        <li>評語：&lt; 0 破財、0~3 偏弱、3~8 平穩、8~15 良好、15 以上旺</li>
+        <li>規則來源：LucaChiu/ziwei</li></ul></details>`;
   }
+  $('ana').addEventListener('click', (e) => {
+    if (e.target.id === 'anaClose') { state.ana = null; state.sel = null; render(); }
+  });
 
-  function render() {
-    const a = state.astro, sc = scopes();
-    // 分析模式：三方四正自動對到目前最上層的財帛 / 田宅
-    let ana = null;
-    // 取消了大限 / 流年，對應層級的分析就失效
-    if (state.ana && ((state.ana.layer === 'dec' && state.sel.dec == null) || (state.ana.layer === 'year' && state.sel.year == null))) state.ana = null;
-    if (state.ana) {
-      ana = analyze(state.ana.kind, state.ana.layer);
-      if (ana.f >= 0) state.focus = ana.f; else ana = null;
+  // 三方四正明細
+  function sfszHTML(H) {
+    if (state.sel === null) {
+      return '<h2>三方四正</h2><p class="hint" style="margin:0">點選命盤上任一宮位，即可標示並列出該宮的三方四正（本宮、對宮、財帛位、官祿位）。</p>';
     }
-    const palaces = a.palaces.map((p, i) => palaceHTML(p, i, sc)).join('');
-    // 同一層的另一半（財運 ↔ 財庫）一起算，用來寫綜合解讀
-    const other = ana ? analyze(ana.kind === 'wealth' ? 'vault' : 'wealth', state.ana.layer) : null;
-    $('out').innerHTML = `<div class="chart-scroll"><div class="chart">${palaces}${centerHTML()}${linesSVG()}</div>${yunHTML()}</div>${ana ? anaHTML(ana, other && other.f >= 0 ? other : null) : ''}`;
+    const roles = sfRoles(state.sel);
+    const idxs = SF_ORDER.map((r) => +Object.keys(roles).find((k) => roles[k] === r));
+    const self = A.palaces[state.sel];
+    const layers = activeLayers();
+
+    const mgOf = (s) => {
+      const out = [];
+      if (s.mutagen) out.push({ m: s.mutagen, src: '生年' });
+      layers.forEach((L) => { const k = H[L.key].mutagen.indexOf(s.name); if (k >= 0) out.push({ m: MG[k], src: L.label, cls: L.cls, sup: L.sup }); });
+      return out;
+    };
+    const starTxt = (s) => {
+      const mg = mgOf(s).map((x) => `<span class="mg ${x.cls || 'birth'}" title="${x.src}化${x.m}">${x.m}</span>`).join('');
+      const nm = s.type === 'major' ? `<span class="major-b">${esc(s.name)}</span>` : esc(s.name);
+      return `${nm}${s.brightness ? '<span class="bri">' + esc(s.brightness) + '</span>' : ''}${mg}`;
+    };
+
+    const allMg = [];      // {m, src, star, role}
+    const shaHits = [];
+    const jiHits = [];
+    const rows = idxs.map((i, k) => {
+      const p = A.palaces[i];
+      const role = SF_ORDER[k];
+      [...p.majorStars, ...p.minorStars].forEach((s) => {
+        mgOf(s).forEach((x) => allMg.push({ ...x, star: s.name, role }));
+        if (SHA.includes(s.name)) shaHits.push(`${s.name}（${role}）`);
+        if (JI_STARS.includes(s.name)) jiHits.push(`${s.name}（${role}）`);
+      });
+      // 空宮借星的四化：借來源宮若不在三方四正內，才計入會照（避免重複計算）
+      if (!p.majorStars.length && !idxs.includes((i + 6) % 12)) {
+        A.palaces[(i + 6) % 12].majorStars.forEach((s) => {
+          mgOf(s).forEach((x) => allMg.push({ ...x, star: s.name, role: role + '・借' }));
+        });
+      }
+      const flowStars = layers.flatMap((L) => (H[L.key].stars?.[i] || []).map((s) => ({ s, L })));
+      flowStars.forEach(({ s }) => {
+        if (/[羊陀]$/.test(s.name)) shaHits.push(`${s.name}（${role}）`);
+        if (/(祿|昌|曲|魁|鉞|馬)$/.test(s.name)) jiHits.push(`${s.name}（${role}）`);
+      });
+      let majors = p.majorStars.map(starTxt).join('、');
+      if (!majors) {
+        const opp = A.palaces[(i + 6) % 12];
+        majors = opp.majorStars.length
+          ? `<span class="borrow"><span class="borrow-tag">借${esc(opp.earthlyBranch)}</span>${opp.majorStars.map(starTxt).join('、')}</span>`
+          : '<span class="hint">空宮</span>';
+      }
+      const minors = p.minorStars.map(starTxt).join('、') || '—';
+      const flows = flowStars.map(({ s, L }) => `<span style="color:var(--${L.cls})">${esc(s.name)}</span>`).join('、') || '—';
+      const names = [`本${esc(p.name)}`, ...layers.map((L) => `<span style="color:var(--${L.cls})">${L.prefix}${esc(SHORT[H[L.key].palaceNames[i]] || H[L.key].palaceNames[i])}</span>`)].join('／');
+      return `<tr><td class="role">${role}</td><td>${esc(p.heavenlyStem + p.earthlyBranch)}</td><td>${names}</td><td>${majors}</td><td>${minors}</td><td>${flows}</td></tr>`;
+    }).join('');
+
+    // 空宮借星
+    const borrowList = idxs.map((i, k) => {
+      const p = A.palaces[i];
+      if (p.majorStars.length) return '';
+      const opp = A.palaces[(i + 6) % 12];
+      return `${SF_ORDER[k]} ${esc(p.earthlyBranch)} 空宮，借 ${esc(opp.earthlyBranch)} ${opp.majorStars.map((s) => esc(s.name)).join('、') || '（對面亦空）'}`;
+    }).filter(Boolean);
+    const borrow = borrowList.length ? `<dt>空宮借星</dt><dd>${borrowList.join('；')}</dd>` : '';
+
+    const mgLine = MG.map((m) => {
+      const hits = allMg.filter((x) => x.m === m);
+      const txt = hits.length
+        ? hits.map((x) => `<span style="color:var(--${x.cls || 'birth'});font-weight:600">${x.src}</span>${esc(x.star)}（${x.role}）`).join('、')
+        : '—';
+      return `<dt><span class="mg neutral">${m}</span> 會照</dt><dd>${txt}</dd>`;
+    }).join('');
+
+    const roleName = (L) => H[L.key].palaceNames[state.sel];
+    const title = `${esc(self.heavenlyStem + self.earthlyBranch)} 本${esc(self.name)}`
+      + layers.map((L) => `／${L.label}${esc(roleName(L))}`).join('');
+
+    return `<h2>三方四正：${title} <button type="button" class="linkbtn" id="sfClear" style="font-size:12px;font-weight:400">取消選取（Esc）</button></h2>
+      <table>
+        <thead><tr><th scope="col">位置</th><th scope="col">干支</th><th scope="col">宮名（本／限／年／月）</th><th scope="col">主星</th><th scope="col">輔星・煞星</th><th scope="col">運限流曜</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <dl class="sum">
+        ${borrow}
+        ${mgLine}
+        <dt>吉星會照</dt><dd class="ji">${jiHits.map(esc).join('、') || '—'}</dd>
+        <dt>煞星會照</dt><dd class="sha">${shaHits.map(esc).join('、') || '—'}</dd>
+      </dl>`;
   }
 
-  $('out').addEventListener('click', (e) => {
-    if (!state) return;
-    const t = e.target.closest('[data-ana],[data-dec],[data-year],[data-month],[data-palace]');
-    if (!t) return;
-    if (t.dataset.ana != null) {
-      const { ana: kind, layer } = t.dataset;
-      const same = state.ana && state.ana.kind === kind && state.ana.layer === layer;
-      state.ana = same ? null : { kind, layer };
-      render();
-      if (!same) document.querySelector('.ana')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } else if (t.dataset.dec != null) selectDecade(+t.dataset.dec);
-    else if (t.dataset.year != null) {
-      const y = +t.dataset.year;
-      if (state.sel.year === y) { state.sel.year = null; state.sel.month = null; computeAndRender(); }
-      else { state.sel.year = y; state.sel.month = null; computeAndRender(); }
-    } else if (t.dataset.month != null) {
-      const m = +t.dataset.month;
-      state.sel.month = state.sel.month === m ? null : m;
-      computeAndRender();
-    } else if (t.dataset.palace != null) {
-      state.ana = null; // 手動點宮位就離開分析模式
-      state.focus = +t.dataset.palace;
-      render();
-    }
-  });
-  $('out').addEventListener('keydown', (e) => {
-    if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset?.palace != null) { e.preventDefault(); e.target.click(); }
-  });
-
-  /* ===== 字型切換（記在 localStorage） ===== */
-  const FONT_KEY = 'ziwei_font_v1';
-  const FONTS = ['ming', 'kai', 'hei'];
-  function applyFont(f) {
-    if (!FONTS.includes(f)) f = 'ming';
-    if (f === 'ming') delete document.documentElement.dataset.font;
-    else document.documentElement.dataset.font = f;
-    document.querySelectorAll('#fontbar button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.font === f)));
-    try { localStorage.setItem(FONT_KEY, f); } catch { /* 無痕模式等情況忽略 */ }
+  // 網址參數可直接帶入，例如 index.html?cal=solar&y=2000&m=1&d=1&t=6&g=女
+  const q = new URLSearchParams(location.search);
+  if (q.has('y')) {
+    const cal = q.get('cal') === 'solar' ? 'solar' : 'lunar';
+    document.querySelector(`input[name=cal][value=${cal}]`).checked = true;
+    document.querySelector(`input[name=g][value=${q.get('g') === '女' ? '女' : '男'}]`).checked = true;
+    $('y').value = q.get('y'); $('m').value = q.get('m') || 1; $('d').value = q.get('d') || 1;
+    $('t').value = String(Math.min(Math.max(parseInt(q.get('t') || '0', 10) || 0, 0), 12));
+    $('leap').checked = q.get('leap') === '1';
+    syncLeap();
+    build();
+    const sel = parseInt(q.get('sel'), 10); // 可選：預先選取宮位 index（0=寅 … 11=丑）
+    if (A && sel >= 0 && sel <= 11) { state.sel = sel; render(); }
   }
-  $('fontbar').addEventListener('click', (e) => {
-    const f = e.target.closest('button[data-font]')?.dataset.font;
-    if (f) applyFont(f);
-  });
-  try { applyFont(localStorage.getItem(FONT_KEY) || 'ming'); } catch { applyFont('ming'); }
-
-  renderProfiles();
 })();
 </script>
 </body>
